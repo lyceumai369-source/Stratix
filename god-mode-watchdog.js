@@ -1,3 +1,4 @@
+
 /* =========================================================
    GOD MODE WATCHDOG v4.1 (Fixed + Stable + AI-Ready)
    Desktop + Mobile Compatible
