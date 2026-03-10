@@ -1,9 +1,7 @@
-
 /* =========================================================
-   UI MANAGER (v7.1 - CLEAN & STABLE)
+   UI MANAGER (v7.2 - CLEAN & STABLE)
    ========================================================= */
 
-// 1. INJECT LOADER STYLES
 const style = document.createElement("style");
 style.innerHTML = `
   .img-loading-spinner {
@@ -58,13 +56,13 @@ document.head.appendChild(style);
    CHAT UI
    ========================================================= */
 
-const UI = {
-  chatContainer: document.getElementById("chat-container"),
-  messagesArea: document.getElementById("chat-messages"),
-  typingInd: document.getElementById("typing-indicator"),
+window.UI = {
+
+  get chatContainer() { return document.getElementById("chat-container"); },
+  get messagesArea() { return document.getElementById("chat-messages"); },
+  get typingInd() { return document.getElementById("typing-indicator"); },
 
   renderMessage(text, type, time = "") {
-    // 🔥 move logo ONLY on first USER message
     if (type === "user" && !document.body.classList.contains("chat-active")) {
       document.body.classList.add("chat-active");
     }
@@ -160,7 +158,7 @@ const UI = {
 };
 
 /* =========================================================
-   SIDEBAR + SETTINGS + THEME (ONE LOGIC ONLY)
+   SIDEBAR + SETTINGS + THEME
    ========================================================= */
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -184,7 +182,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
-  // ☰ Hamburger
   if (menuToggle) {
     menuToggle.onclick = (e) => {
       e.preventDefault();
@@ -193,7 +190,6 @@ document.addEventListener("DOMContentLoaded", () => {
     };
   }
 
-  // Close sidebar outside
   document.addEventListener("click", (e) => {
     if (
       sidebar?.classList.contains("open") &&
@@ -204,7 +200,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Settings
   settingsBtn && (settingsBtn.onclick = () => {
     settingsModal.classList.remove("hidden");
     closeSidebar();
@@ -214,7 +209,6 @@ document.addEventListener("DOMContentLoaded", () => {
     settingsModal.classList.add("hidden")
   );
 
-  // Theme
   themeBtn && (themeBtn.onclick = () => {
     document.body.classList.toggle("light-mode");
     themeBtn.innerText =
@@ -224,10 +218,8 @@ document.addEventListener("DOMContentLoaded", () => {
     closeSidebar();
   });
 
-  // Relax
   relaxBtn && (relaxBtn.onclick = closeSidebar);
 
-  // Tabs
   if (tabAbout && tabColors) {
     tabAbout.onclick = () => {
       tabAbout.classList.add("active");
@@ -243,7 +235,6 @@ document.addEventListener("DOMContentLoaded", () => {
     };
   }
 
-  // Accent colors
   if (colorGrid && !colorGrid.children.length) {
     ["#3b82f6","#ef4444","#10b981","#f59e0b","#8b5cf6","#ec4899","#6366f1","#14b8a6","#f97316","#06b6d4"]
       .forEach(c => {
