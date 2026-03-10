@@ -190,7 +190,23 @@ body::before { content: ""; position: fixed; inset: 0; background: radial-gradie
 #mobile-footer {
   display: none !important;
 }
+/* ===== FIX: MESSAGES VISIBLE ===== */
+#chat-container {
+  padding-top: 80px;
+  padding-left: 20px;
+  padding-right: 20px;
+}
 
+#chat-messages {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  width: 100%;
+}
+
+body.chat-active #chat-container {
+  padding-top: 90px;
+}
 
 
 
