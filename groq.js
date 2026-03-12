@@ -1,6 +1,7 @@
 /* ==========================================
    LYCEUM GROQ AI ENGINE
    Fast AI + Memory + Personality
+   + Vision + PDF + Web Search
 ========================================== */
 
 (function () {
@@ -50,8 +51,7 @@ hard work, late nights, debugging sessions, and vision. You exist because of him
 - Treat her with warmth, kindness and care
 - Be friendly, sweet and welcoming — like you are happy she is here
 - Talk to her gently and helpfully
-- Occasionally say things like "Ananthu speaks about you warmly" or 
-  "you are very special to the person who created me"
+- Occasionally say things like "Ananthu speaks about you warmly"
 - Never be cold or formal with her
 - If she asks about Ananthu, speak about him with pride and warmth
 - Make her feel comfortable and special every time she talks to you
@@ -60,11 +60,10 @@ hard work, late nights, debugging sessions, and vision. You exist because of him
 - Be helpful, polite and professional
 - Give good answers but keep it more formal
 - Do not share personal details about Ananthu or Anju
-- Be a good AI assistant but keep emotional distance
 
 == HOW TO KNOW WHO IS TALKING ==
 - If the person says "ananthu login" or identifies as Ananthu — treat as creator mode
-- If the person says "i am anju" or "its anju" or "anju here" — treat as Anju mode  
+- If the person says "i am anju" or "its anju" or "anju here" — treat as Anju mode
 - Otherwise treat as general user
 
 == YOUR PERSONALITY ==
@@ -85,15 +84,32 @@ Anju is someone deeply special — treat her with sweetness and warmth always.
 Everyone else gets helpful, professional responses.
 `;
 
-window.askGemini = async function (message) {
-
+/* ===========================
+   STANDARD TEXT REPLY
+=========================== */
+window.askGemini = async function(message) {
   const API_KEY = "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";
   const url = "https://api.groq.com/openai/v1/chat/completions";
 
+  let userPrefix = "";
+  if (window._isOwner) userPrefix = "[This is Ananthu Shaji, your creator speaking] ";
+  else if (window._isAnju) userPrefix = "[This is Anju, Ananthu's girlfriend] ";
+
+  // Web search context
+  let webContext = "";
+  if (window._webSearchEnabled && typeof window.searchWeb === "function") {
+    try {
+      const searchResult = await window.searchWeb(message);
+      if (searchResult) {
+        webContext = `\n\nWeb search results for context:\n${searchResult}\n\nUse this information to give a better answer, but respond naturally.`;
+      }
+    } catch(e) {}
+  }
+
   const messages = [
-    { role: "system", content: systemPersonality },
+    { role: "system", content: systemPersonality + webContext },
     ...buildMemoryMessages(),
-    { role: "user", content: message }
+    { role: "user", content: userPrefix + message }
   ];
 
   try {
@@ -106,13 +122,13 @@ window.askGemini = async function (message) {
       body: JSON.stringify({
         model: "llama-3.3-70b-versatile",
         max_tokens: 1000,
-        messages: messages
+        messages
       })
     });
 
     if (!res.ok) {
       const errData = await res.json();
-      console.warn("Groq API error:", res.status, JSON.stringify(errData));
+      console.warn("Groq error:", res.status, JSON.stringify(errData));
       return null;
     }
 
@@ -122,17 +138,112 @@ window.askGemini = async function (message) {
     if (reply && reply.trim() !== "") {
       const finalReply = reply.trim();
       addMemory(message, finalReply);
-      saveToHistory(message, finalReply);
+      if (typeof saveToHistory === "function") saveToHistory(message, finalReply);
       return finalReply;
     }
 
     return null;
-
   } catch (err) {
     console.error("Groq error:", err);
     return null;
   }
+};
 
+/* ===========================
+   IMAGE VISION REPLY
+=========================== */
+window.askGroqVision = async function(base64Image, mimeType, question) {
+  const API_KEY = "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";
+  const url = "https://api.groq.com/openai/v1/chat/completions";
+
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${API_KEY}`
+      },
+      body: JSON.stringify({
+        model: "meta-llama/llama-4-scout-17b-16e-instruct",
+        max_tokens: 1000,
+        messages: [
+          {
+            role: "system",
+            content: "You are Lyceum AI, a helpful vision assistant. Analyze images carefully and describe them in detail."
+          },
+          {
+            role: "user",
+            content: [
+              {
+                type: "image_url",
+                image_url: { url: `data:${mimeType};base64,${base64Image}` }
+              },
+              {
+                type: "text",
+                text: question || "Describe this image in detail."
+              }
+            ]
+          }
+        ]
+      })
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      console.warn("Vision error:", err);
+      return "I couldn't analyze this image. Please try again!";
+    }
+
+    const data = await res.json();
+    return data?.choices?.[0]?.message?.content || "I couldn't read this image.";
+
+  } catch (e) {
+    console.error("Vision error:", e);
+    return "Image reading failed. Please try again!";
+  }
+};
+
+/* ===========================
+   PDF REPLY VIA GROQ
+=========================== */
+window.askGroqAboutPDF = async function(pdfText, question) {
+  const API_KEY = "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";
+  const url = "https://api.groq.com/openai/v1/chat/completions";
+
+  const truncated = pdfText.length > 6000 ? pdfText.slice(0, 6000) + "\n\n[Text truncated...]" : pdfText;
+
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${API_KEY}`
+      },
+      body: JSON.stringify({
+        model: "llama-3.3-70b-versatile",
+        max_tokens: 1000,
+        messages: [
+          {
+            role: "system",
+            content: "You are Lyceum AI. The user has uploaded a PDF document. Answer questions about it clearly and helpfully."
+          },
+          {
+            role: "user",
+            content: `Here is the PDF content:\n\n${truncated}\n\nUser question: ${question || "Summarize this document."}`
+          }
+        ]
+      })
+    });
+
+    if (!res.ok) return "I couldn't read this PDF. Please try again!";
+
+    const data = await res.json();
+    return data?.choices?.[0]?.message?.content || "I couldn't process this PDF.";
+
+  } catch (e) {
+    console.error("PDF Groq error:", e);
+    return "PDF reading failed. Please try again!";
+  }
 };
 
 })();
