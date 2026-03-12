@@ -8,7 +8,46 @@
 =========================== */
 async function searchWeb(query) {
   try {
-    const url = `https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_html=1&skip_disambig=1`;
+    // Try Wikipedia search first for factual queries
+    const wikiUrl = `https://en.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(query)}&limit=3&format=json&origin=*`;
+    const wikiRes = await fetch(wikiUrl);
+    const wikiData = await wikiRes.json();
+
+    let results = [];
+
+    // Get Wikipedia summaries
+    if (wikiData[1] && wikiData[1].length > 0) {
+      for (let i = 0; i < Math.min(2, wikiData[1].length); i++) {
+        const title = wikiData[1][i];
+        try {
+          const summaryRes = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`);
+          const summaryData = await summaryRes.json();
+          if (summaryData.extract) {
+            results.push(`📖 **${summaryData.title}**: ${summaryData.extract.slice(0, 300)}...`);
+          }
+        } catch(e) {}
+      }
+    }
+
+    // Also try DuckDuckGo for additional context
+    try {
+      const ddgUrl = `https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_html=1&skip_disambig=1`;
+      const ddgRes = await fetch(ddgUrl);
+      const ddgData = await ddgRes.json();
+      if (ddgData.AbstractText) {
+        results.push(`🔍 ${ddgData.AbstractText}`);
+      }
+    } catch(e) {}
+
+    if (results.length === 0) return null;
+
+    return `🌐 **Web Search: "${query}"**\n\n${results.join("\n\n")}`;
+
+  } catch (e) {
+    console.warn("Web search failed:", e);
+    return null;
+  }
+}
     const res = await fetch(url);
     const data = await res.json();
 
@@ -161,3 +200,4 @@ window.searchWeb = searchWeb;
 window.readImageWithGroq = readImageWithGroq;
 window.readPDF = readPDF;
 window.fileToBase64 = fileToBase64;
+
