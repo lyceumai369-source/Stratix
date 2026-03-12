@@ -5,9 +5,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-
   <title>Lyceum AI v2</title>
-
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="relax.css">
   <link rel="stylesheet" href="mobile.css" />
@@ -33,41 +31,30 @@
       </div>
 
       <div class="sidebar-top">
-        <button type="button" class="new-chat-btn" onclick="location.reload()">
+        <button type="button" class="new-chat-btn" id="new-chat-btn">
           <span>+</span> New Chat
         </button>
       </div>
 
-      <!-- HISTORY PANEL -->
       <div class="history-panel">
         <div class="history-title">🕘 Recent Chats</div>
         <div id="history-list"></div>
         <button id="clear-history-btn" style="
-          margin-top:10px;
-          width:100%;
-          background:transparent;
-          border:1px solid #ff4757;
-          color:#ff4757;
-          padding:8px;
-          border-radius:8px;
-          cursor:pointer;
-          font-size:12px;
-        ">🗑️ Clear History</button>
+          margin-top:10px;width:100%;background:transparent;
+          border:1px solid #ff4757;color:#ff4757;padding:8px;
+          border-radius:8px;cursor:pointer;font-size:12px;">
+          🗑️ Clear History
+        </button>
       </div>
 
       <div class="sidebar-bottom">
-        <button type="button" id="settings-btn" class="secondary-btn">
-          ⚙️ Settings
-        </button>
-        <button type="button" id="theme-toggle-btn" class="secondary-btn">
-          🌙 Dark Mode
-        </button>
+        <button type="button" id="settings-btn" class="secondary-btn">⚙️ Settings</button>
+        <button type="button" id="theme-toggle-btn" class="secondary-btn">🌙 Dark Mode</button>
         <button id="relaxBtn" class="relax-btn">🌿 Relax</button>
       </div>
     </aside>
 
     <div id="main-content">
-
       <header class="mobile-nav">
         <button id="menu-toggle">☰</button>
       </header>
@@ -88,28 +75,21 @@
 
       <main id="chat-container">
         <div id="chat-messages"></div>
-        <div id="wiki-loading" class="hidden">
-          Searching Wikipedia...
-        </div>
+        <div id="wiki-loading" class="hidden">Searching...</div>
         <div id="typing-indicator" class="hidden">
           <span></span><span></span><span></span>
         </div>
-
-        <!-- SUGGESTION CHIPS -->
         <div id="suggestions-box">
           <p class="suggestion-label">✨ Try asking...</p>
           <div id="suggestion-chips"></div>
         </div>
       </main>
+
       <footer id="input-area">
         <div class="input-wrapper">
           <div class="footer-input">
-            <input
-              type="text"
-              id="user-input"
-              placeholder="Type to Lyceum..."
-              autocomplete="off"
-            />
+            <input type="text" id="user-input"
+              placeholder="Type to Lyceum..." autocomplete="off" />
             <button type="button" id="mic-btn" class="icon-btn">🎤</button>
             <button type="button" id="send-btn">
               <svg viewBox="0 0 24 24">
@@ -119,7 +99,6 @@
           </div>
         </div>
       </footer>
-
     </div>
   </div>
 
@@ -128,7 +107,7 @@
     <div class="modal-content">
       <div class="modal-tabs">
         <button type="button" id="tab-about" class="tab-btn active">About</button>
-        <button type="button" id="tab-colors" class="tab-btn">Themes</button>
+        <button type="button" id="tab-colors" class="tab-btn">Colors</button>
       </div>
       <div id="content-about" class="tab-content">
         <img src="logo.png" alt="Lyceum AI Logo" class="modal-logo">
@@ -163,9 +142,9 @@
           A high-integrated architecture built for <strong>visionaries</strong>.
         </p>
         <ul class="lyra-features">
-          <li style="--delay: 1;">🚀 <strong>High-Integrated Core:</strong> Complex logic made simple.</li>
-          <li style="--delay: 2;">⚡ <strong>Instant Yield:</strong> Designed for speed & precision.</li>
-          <li style="--delay: 3;">🛡️ <strong>Private Resource:</strong> Your data, your architecture.</li>
+          <li style="--delay:1;">🚀 <strong>High-Integrated Core:</strong> Complex logic made simple.</li>
+          <li style="--delay:2;">⚡ <strong>Instant Yield:</strong> Designed for speed & precision.</li>
+          <li style="--delay:3;">🛡️ <strong>Private Resource:</strong> Your data, your architecture.</li>
         </ul>
         <p class="lyra-footer-text">"Experience the power of true intelligence."</p>
       </div>
@@ -188,31 +167,17 @@
     <span>Powered by <strong>Lyceum Intelligence</strong></span>
   </div>
 
-  <!-- GOD MODE WATCHDOG FIRST -->
   <script defer src="god-mode-watchdog.js"></script>
-
-  <!-- AI ENGINES -->
   <script src="groq.js"></script>
   <script defer src="wikiEngine.js"></script>
   <script defer src="fallback.js"></script>
-
-  <!-- CORE BRAIN -->
   <script defer src="brain.js"></script>
-
-  <!-- UI SYSTEM -->
   <script defer src="ui.js"></script>
-
-  <!-- VISION SYSTEM -->
   <script defer src="vision.js"></script>
-
-  <!-- RELAX MODULE -->
+  <script defer src="attach.js"></script>
   <script defer src="relax.js"></script>
-
-  <!-- HISTORY ENGINE -->
   <script defer src="history.js"></script>
-  <!-- SUGGESTIONS ENGINE -->
-<script defer src="suggestions.js"></script>
-  <!-- MAIN CONTROLLER -->
+  <script defer src="suggestions.js"></script>
   <script defer src="main.js"></script>
 
 </body>
