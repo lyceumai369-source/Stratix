@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ml">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>For Anju ❤️</title>
+
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: radial-gradient(circle at top, #1b1b3a, #000);
+      overflow-y: auto;
+      font-family: 'Segoe UI', sans-serif;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    }
+
+    /* stars */
+    .star {
+      position: absolute;
+      width: 2px;
+      height: 2px;
+      background: white;
+      opacity: 0.8;
+      animation: twinkle 3s infinite alternate;
+    }
+
+    @keyframes twinkle {
+      from { opacity: 0.3; }
+      to { opacity: 1; }
+    }
+
+    .content {
+      z-index: 5;
+      animation: fadeIn 2s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.9); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .photo {
+      width: 160px;
+      height: 160px;
+      border-radius: 50%;
+      overflow: hidden;
+      margin: 0 auto 20px;
+      box-shadow: 0 0 40px rgba(255,255,255,0.6);
+    }
+
+    .photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    h1 {
+      font-size: clamp(22px,6vw,32px);
+      margin-bottom: 10px;
+    }
+
+    .line {
+      font-size: clamp(14px,4vw,18px);
+      margin: 12px 0;
+      opacity: 0;
+      animation: show 1s forwards;
+    }
+
+    @keyframes show {
+      to { opacity: 1; }
+    }
+
+    .final {
+      margin-top: 25px;
+      font-size: clamp(16px,5vw,22px);
+      font-weight: bold;
+      color: #ff9ad5;
+      text-shadow: 0 0 15px rgba(255,154,213,0.9);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- stars -->
+  <script>
+    for(let i=0;i<120;i++){
+      const s=document.createElement("div");
+      s.className="star";
+      s.style.left=Math.random()*100+"vw";
+      s.style.top=Math.random()*100+"vh";
+      s.style.animationDelay=Math.random()*3+"s";
+      document.body.appendChild(s);
+    }
+  </script>
+
+  <div class="content">
+    <div class="photo">
+      <img src="assets/images/anju.jpg">
+    </div>
+
+    <h1>അഞ്ജു ❤️</h1>
+
+    <div class="line" style="animation-delay:1s">
+      ഈ ലോകത്ത് ഒരുപാട് ആളുകൾ ഉണ്ടാകും…
+    </div>
+
+    <div class="line" style="animation-delay:2.5s">
+      പക്ഷേ എന്റെ ലോകം പൂർണ്ണമാകുന്നത്
+    </div>
+
+    <div class="line" style="animation-delay:4s">
+      നീ അതിൽ ഉണ്ടായതിനാലാണ്…
+    </div>
+
+    <div class="final" style="animation-delay:5.5s">
+      🎁 നീയാണ് എന്റെ ജീവിതത്തിലെ ഏറ്റവും വലിയ സമ്മാനം 🎁
+    </div>
+  </div>
+ <button onclick="location.href='promise.html'" style="
+  margin-top:25px;padding:12px 30px;border:none;border-radius:30px;
+  background:#ff4f81;color:#fff;font-size:16px;cursor:pointer;">
+  തുടരാം ❤️
+</button>
+ <script>
+(function(){
+  /* ── Music engine: seamless across all pages ── */
+  if (!window.bgMusic) {
+    window.bgMusic = new Audio("assets/music/anju-song.mp3");
+    window.bgMusic.loop = true;
+    window.bgMusic.volume = 0.6;
+    window.bgMusic.preload = "auto";
+  }
+  // Save position continuously
+  window.bgMusic.ontimeupdate = function() {
+    try { localStorage.setItem("musicTime", window.bgMusic.currentTime); } catch(e){}
+  };
+  // Restore position + try autoplay
+  var _t = null;
+  try { _t = localStorage.getItem("musicTime"); } catch(e){}
+  if (_t) window.bgMusic.currentTime = parseFloat(_t);
+  window.bgMusic.play().catch(function(){});
+
+  // iOS Safari fix: play on very first touch anywhere on page
+  function _tryPlay(){ window.bgMusic.play().catch(function(){}); }
+  document.addEventListener("touchstart", _tryPlay, {once:true, passive:true});
+  document.addEventListener("click",      _tryPlay, {once:true, passive:true});
+
+  // Save before leaving
+  window.addEventListener("pagehide", function(){
+    try { localStorage.setItem("musicTime", window.bgMusic.currentTime); } catch(e){}
+  });
+  window.addEventListener("beforeunload", function(){
+    try { localStorage.setItem("musicTime", window.bgMusic.currentTime); } catch(e){}
+  });
+  // Pause/resume on visibility change (battery + lag fix)
+  document.addEventListener("visibilitychange", function(){
+    if (document.hidden) window.bgMusic.pause();
+    else window.bgMusic.play().catch(function(){});
+  });
+})();
+</script>
+</body>
+</html>

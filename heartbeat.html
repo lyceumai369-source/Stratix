@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="ml">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Heartbeat ❤️</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(160deg, #1a0010, #3d0030, #1a0010);
+      min-height: 100vh;
+      color: #fff;
+      overflow-x: hidden;
+    }
+    .float-heart {
+      position: fixed;
+      pointer-events: none;
+      animation: floatUp linear infinite;
+      opacity: 0;
+      z-index: 0;
+    }
+    @keyframes floatUp {
+      0%   { transform: translateY(100vh); opacity: 0; }
+      20%  { opacity: 0.6; }
+      80%  { opacity: 0.4; }
+      100% { transform: translateY(-10vh); opacity: 0; }
+    }
+    .section {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 40px 20px;
+      position: relative;
+      z-index: 2;
+    }
+    .sec-title {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      text-align: center;
+    }
+    .sec-sub {
+      font-size: 13px;
+      opacity: 0.6;
+      margin-bottom: 28px;
+      text-align: center;
+    }
+    .divider {
+      width: 80px;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, #ff4f81, transparent);
+      margin: 0 auto 28px;
+      border-radius: 2px;
+    }
+
+    /* SCRATCH CARD */
+    .scratch-outer {
+      position: relative;
+      width: min(300px, 88vw);
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: 0 0 60px rgba(255,80,150,0.4), 0 25px 60px rgba(0,0,0,0.6);
+    }
+    .scratch-bg {
+      width: 100%;
+      min-height: 220px;
+      background: linear-gradient(135deg, #ff4f81, #c471ed, #12c2e9);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 30px 20px;
+      text-align: center;
+    }
+    .scratch-bg .s-icon { font-size: 48px; margin-bottom: 12px; }
+    .scratch-bg .s-main { font-size: 18px; font-weight: 700; line-height: 1.6; }
+    .scratch-bg .s-sub  { font-size: 13px; opacity: 0.85; margin-top: 10px; line-height: 1.5; }
+    #scratchCanvas {
+      position: absolute; top: 0; left: 0;
+      cursor: crosshair; border-radius: 24px; touch-action: none;
+    }
+    .scratch-hint {
+      margin-top: 16px; font-size: 13px; opacity: 0.6;
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:0.3;} 50%{opacity:0.9;} }
+    .revealed-badge {
+      display: none; margin-top: 14px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 30px; padding: 8px 24px;
+      font-size: 14px; color: #ffd700;
+    }
+
+    /* HEARTBEAT */
+    #sec-heart { background: linear-gradient(160deg, #0a0015, #1f0030, #0a0015); border-top: 1px solid rgba(255,255,255,0.05); }
+    .heart-wrapper {
+      position: relative;
+      display: flex; justify-content: center; align-items: center;
+      margin: 10px 0 30px;
+    }
+    .heartbeat-big {
+      font-size: clamp(70px,25vw,110px);
+      animation: heartbeat 1.2s ease-in-out infinite;
+      filter: drop-shadow(0 0 30px rgba(255,80,130,0.9));
+      position: relative; z-index: 2;
+    }
+    @keyframes heartbeat {
+      0%  { transform: scale(1); }
+      14% { transform: scale(1.22); }
+      28% { transform: scale(1); }
+      42% { transform: scale(1.18); }
+      70% { transform: scale(1); }
+      100%{ transform: scale(1); }
+    }
+    .ring {
+      position: absolute; width: 130px; height: 130px;
+      border-radius: 50%;
+      border: 2px solid rgba(255,80,130,0.5);
+      animation: ringPulse 1.2s ease-out infinite;
+    }
+    .ring:nth-child(2){ animation-delay:0.3s; }
+    .ring:nth-child(3){ animation-delay:0.6s; }
+    @keyframes ringPulse {
+      0%  { transform:scale(0.8); opacity:0.8; }
+      100%{ transform:scale(2.5); opacity:0; }
+    }
+    .ecg-wrap { width:min(300px,88vw); height:55px; overflow:hidden; margin:0 auto 24px; }
+    .ecg-wrap svg { width:200%; height:100%; animation:ecgScroll 2s linear infinite; }
+    @keyframes ecgScroll { from{transform:translateX(0);} to{transform:translateX(-50%);} }
+    .heart-msg-box {
+      background: rgba(255,255,255,0.07);
+      backdrop-filter: blur(14px);
+      border-radius: 20px;
+      border: 1px solid rgba(255,80,130,0.3);
+      padding: 28px 24px;
+      max-width: min(320px,88vw);
+      text-align: center;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.5), 0 0 40px rgba(255,80,130,0.15);
+    }
+    .heart-msg-box .hm1 { font-size: 17px; line-height: 1.7; color: #ffb3cc; margin-bottom: 14px; }
+    .heart-msg-box .hm2 { font-size: 15px; line-height: 1.6; color: rgba(255,255,255,0.75); }
+
+    /* TIMER */
+    #sec-timer { background: linear-gradient(160deg, #0d1b2a, #1b2838, #0d1b2a); border-top: 1px solid rgba(255,255,255,0.05); }
+    .clock-photo-wrap {
+      position: relative; width: min(210px,55vw); height: min(210px,55vw);
+      margin: 0 auto 28px;
+    }
+    .clock-ring {
+      position: absolute; inset: 0; border-radius: 50%;
+      background: conic-gradient(from 0deg, #ff4f81, #c471ed, #12c2e9, #ff4f81);
+      padding: 4px;
+      box-shadow: 0 0 40px rgba(255,80,130,0.5);
+      animation: rotateSlow 20s linear infinite;
+    }
+    @keyframes rotateSlow { to{ transform:rotate(360deg); } }
+    .clock-inner {
+      position: absolute; inset: 4px; border-radius: 50%;
+      background: #0d1b2a;
+      display: flex; justify-content: center; align-items: center;
+      overflow: hidden;
+    }
+    .clock-inner img {
+      width: 100%; height: 100%; object-fit: cover;
+      border-radius: 50%; opacity: 0.4;
+    }
+    #clockSvg { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .digital-time {
+      font-size: clamp(26px,8vw,36px); font-weight: 800; text-align: center;
+      letter-spacing: 3px;
+      background: linear-gradient(135deg, #ff4f81, #c471ed);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      margin-bottom: 6px;
+    }
+    .digital-date { font-size: 13px; opacity: 0.5; text-align: center; margin-bottom: 28px; }
+    .counter-label { font-size: 14px; opacity: 0.6; text-align: center; margin-bottom: 12px; }
+    .counter-cards { display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin-bottom:10px; }
+    .c-card {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,80,130,0.25);
+      border-radius: 16px; padding: 14px 16px;
+      text-align: center; min-width: 68px;
+      backdrop-filter: blur(8px);
+    }
+    .c-card .num {
+      font-size: clamp(20px,6vw,26px); font-weight: 800;
+      background: linear-gradient(135deg, #ff4f81, #ffd700);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .c-card .lbl { font-size: 10px; opacity: 0.6; margin-top: 3px; }
+    .love-since { font-size: 13px; opacity: 0.45; text-align: center; margin-bottom: 36px; }
+    .next-btn {
+      display: block; margin: 10px auto 0;
+      padding: 14px 44px; border: none; border-radius: 50px;
+      background: linear-gradient(135deg, #ff4f81, #c471ed);
+      color: #fff; font-size: 16px; font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 15px 40px rgba(255,80,130,0.4);
+      transition: transform 0.2s;
+    }
+    .next-btn:hover { transform: translateY(-3px); }
+    .next-btn:active { transform: scale(0.97); }
+  </style>
+</head>
+<body>
+
+<script>
+  const emojis=['❤️','💕','💗','💓','🌸','✨'];
+  for(let i=0;i<18;i++){
+    const d=document.createElement('div');
+    d.className='float-heart';
+    d.innerText=emojis[i%emojis.length];
+    d.style.left=Math.random()*100+'vw';
+    d.style.animationDuration=(7+Math.random()*6)+'s';
+    d.style.animationDelay=(Math.random()*8)+'s';
+    d.style.fontSize=(12+Math.random()*12)+'px';
+    document.body.appendChild(d);
+  }
+</script>
+
+<!-- SCRATCH CARD -->
+<div class="section" id="sec-scratch">
+  <div class="sec-title">💌 Scratch to feel it…</div>
+  <div class="sec-sub">Something special is hiding here for you ✨</div>
+  <div class="scratch-outer" id="scratchOuter">
+    <div class="scratch-bg">
+      <div class="s-icon">💝</div>
+      <div class="s-main">Every beat of my heart<br>is for you.</div>
+      <div class="s-sub">My world feels complete<br>only when you are there. ❤️</div>
+    </div>
+    <canvas id="scratchCanvas"></canvas>
+  </div>
+  <div class="scratch-hint" id="scratchHint">☝️ Scratch with finger or mouse</div>
+  <div class="revealed-badge" id="revealedBadge">💖 You found it!</div>
+</div>
+
+<!-- HEARTBEAT -->
+<div class="section" id="sec-heart">
+  <div class="sec-title">Heartbeat Page ❤️</div>
+  <div class="divider"></div>
+  <div class="heart-wrapper">
+    <div class="ring"></div><div class="ring"></div><div class="ring"></div>
+    <div class="heartbeat-big">❤️</div>
+  </div>
+  <div class="ecg-wrap">
+    <svg viewBox="0 0 400 55" xmlns="http://www.w3.org/2000/svg">
+      <polyline
+        points="0,28 30,28 42,28 50,8 55,48 62,8 67,48 74,28 110,28
+                140,28 152,28 160,8 165,48 172,8 177,48 184,28 220,28
+                250,28 262,28 270,8 275,48 282,8 287,48 294,28 330,28
+                360,28 372,28 380,8 385,48 392,8 397,48 400,28"
+        fill="none" stroke="#ff4f81" stroke-width="2.5"
+        stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </div>
+  <div class="heart-msg-box">
+    <div class="hm1">Every beat of my heart<br>is for you. 💓</div>
+    <div class="hm2">My world feels complete<br>only when you are there.</div>
+  </div>
+</div>
+
+<!-- TIMER -->
+<div class="section" id="sec-timer">
+  <div class="sec-title">⏳ Our Time Counter</div>
+  <div class="sec-sub">From the moment you became mine…</div>
+
+  <div class="clock-photo-wrap">
+    <div class="clock-ring"></div>
+    <div class="clock-inner">
+      <img src="assets/images/couple_clock.jpg" alt="Anju">
+    </div>
+    <svg id="clockSvg" viewBox="0 0 210 210" xmlns="http://www.w3.org/2000/svg">
+      <g id="clockMarkers"></g>
+      <line id="hourHand" x1="105" y1="105" x2="105" y2="68" stroke="#ff4f81" stroke-width="4" stroke-linecap="round"/>
+      <line id="minHand"  x1="105" y1="105" x2="105" y2="52" stroke="#c471ed" stroke-width="3" stroke-linecap="round"/>
+      <line id="secHand"  x1="105" y1="105" x2="105" y2="40" stroke="#ffd700" stroke-width="1.5" stroke-linecap="round"/>
+      <circle cx="105" cy="105" r="5" fill="#ff4f81"/>
+    </svg>
+  </div>
+
+  <div class="digital-time" id="digitalTime">00:00:00</div>
+  <div class="digital-date" id="digitalDate"></div>
+
+  <div class="counter-label">💕 We have been together for…</div>
+  <div class="counter-cards">
+    <div class="c-card"><div class="num" id="cDays">0</div><div class="lbl">Days</div></div>
+    <div class="c-card"><div class="num" id="cHours">00</div><div class="lbl">Hours</div></div>
+    <div class="c-card"><div class="num" id="cMins">00</div><div class="lbl">Minutes</div></div>
+    <div class="c-card"><div class="num" id="cSecs">00</div><div class="lbl">Seconds</div></div>
+  </div>
+  <div class="love-since">Since September 2025 → April 8, 2026 ❤️</div>
+  <button class="next-btn" onclick="location.href='mysterybox.html'">അടുത്തത് 🎁</button>
+</div>
+
+<script>
+/* SCRATCH */
+(function(){
+  const outer=document.getElementById('scratchOuter');
+  const canvas=document.getElementById('scratchCanvas');
+  const ctx=canvas.getContext('2d');
+  const hint=document.getElementById('scratchHint');
+  const badge=document.getElementById('revealedBadge');
+  let painting=false, revealed=false;
+
+  function resize(){
+    const r=outer.getBoundingClientRect();
+    canvas.width=r.width; canvas.height=r.height;
+    drawCover();
+  }
+  function drawCover(){
+    const g=ctx.createLinearGradient(0,0,canvas.width,canvas.height);
+    g.addColorStop(0,'#b8860b'); g.addColorStop(0.35,'#ffd700');
+    g.addColorStop(0.65,'#daa520'); g.addColorStop(1,'#b8860b');
+    ctx.fillStyle=g; ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle='rgba(0,0,0,0.35)';
+    ctx.font='bold 15px Segoe UI'; ctx.textAlign='center';
+    ctx.fillText('✨ Scratch here ✨',canvas.width/2,canvas.height/2-10);
+    ctx.font='12px Segoe UI';
+    ctx.fillText('Something special is waiting…',canvas.width/2,canvas.height/2+14);
+  }
+  window.addEventListener('load',resize);
+
+  function getPos(e){
+    const r=canvas.getBoundingClientRect();
+    if(e.touches) return{x:e.touches[0].clientX-r.left,y:e.touches[0].clientY-r.top};
+    return{x:e.clientX-r.left,y:e.clientY-r.top};
+  }
+  function scratch(e){
+    if(!painting)return; e.preventDefault();
+    const p=getPos(e);
+    ctx.globalCompositeOperation='destination-out';
+    ctx.beginPath(); ctx.arc(p.x,p.y,28,0,Math.PI*2); ctx.fill();
+    check();
+  }
+  function check(){
+    if(revealed)return;
+    const d=ctx.getImageData(0,0,canvas.width,canvas.height).data;
+    let c=0; for(let i=3;i<d.length;i+=4)if(d[i]<128)c++;
+    if(c/(canvas.width*canvas.height)>0.45){
+      revealed=true;
+      canvas.style.transition='opacity 0.8s'; canvas.style.opacity='0';
+      setTimeout(()=>canvas.style.display='none',800);
+      hint.style.display='none'; badge.style.display='block';
+      for(let i=0;i<28;i++){
+        const h=document.createElement('div');
+        h.style.cssText=`position:fixed;font-size:22px;pointer-events:none;z-index:999;
+          left:${Math.random()*100}vw;top:${Math.random()*60+10}vh;
+          animation:floatUp ${2+Math.random()*2}s ease forwards`;
+        h.innerText=['💝','💖','✨','🌸','❤️'][Math.floor(Math.random()*5)];
+        document.body.appendChild(h);
+        setTimeout(()=>h.remove(),4000);
+      }
+    }
+  }
+  canvas.addEventListener('mousedown',e=>{painting=true;scratch(e);});
+  canvas.addEventListener('mousemove',scratch);
+  canvas.addEventListener('mouseup',()=>painting=false);
+  canvas.addEventListener('touchstart',e=>{painting=true;scratch(e);},{passive:false});
+  canvas.addEventListener('touchmove',scratch,{passive:false});
+  canvas.addEventListener('touchend',()=>painting=false);
+})();
+
+/* CLOCK MARKERS */
+(function(){
+  const g=document.getElementById('clockMarkers');
+  const cx=105,cy=105,r=94;
+  for(let i=0;i<12;i++){
+    const a=(i/12)*Math.PI*2-Math.PI/2;
+    const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1',cx+Math.cos(a)*(r-6));
+    line.setAttribute('y1',cy+Math.sin(a)*(r-6));
+    line.setAttribute('x2',cx+Math.cos(a)*(r-16));
+    line.setAttribute('y2',cy+Math.sin(a)*(r-16));
+    line.setAttribute('stroke','rgba(255,255,255,0.3)');
+    line.setAttribute('stroke-width','2');
+    g.appendChild(line);
+  }
+})();
+
+/* CLOCK + COUNTER */
+function tick(){
+  const now=new Date();
+  const h=now.getHours(),m=now.getMinutes(),s=now.getSeconds();
+  const hA=((h%12)/12)*360+(m/60)*30-90;
+  const mA=(m/60)*360+(s/60)*6-90;
+  const sA=(s/60)*360-90;
+  function pt(a,l){const r=a*Math.PI/180;return{x:105+Math.cos(r)*l,y:105+Math.sin(r)*l};}
+  const hP=pt(hA,36),mP=pt(mA,50),sP=pt(sA,56);
+  document.getElementById('hourHand').setAttribute('x2',hP.x);
+  document.getElementById('hourHand').setAttribute('y2',hP.y);
+  document.getElementById('minHand').setAttribute('x2',mP.x);
+  document.getElementById('minHand').setAttribute('y2',mP.y);
+  document.getElementById('secHand').setAttribute('x2',sP.x);
+  document.getElementById('secHand').setAttribute('y2',sP.y);
+
+  const pad=n=>String(n).padStart(2,'0');
+  document.getElementById('digitalTime').textContent=`${pad(h)}:${pad(m)}:${pad(s)}`;
+  const days=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  document.getElementById('digitalDate').textContent=
+    `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
+
+  const start=new Date('2025-09-01T00:00:00+05:30');
+  const target=new Date('2026-04-08T00:00:00+05:30');
+  const end=now<target?now:target;
+  const diff=Math.max(0,end-start);
+  const ts=Math.floor(diff/1000);
+  document.getElementById('cDays').textContent=Math.floor(ts/86400);
+  document.getElementById('cHours').textContent=pad(Math.floor((ts%86400)/3600));
+  document.getElementById('cMins').textContent=pad(Math.floor((ts%3600)/60));
+  document.getElementById('cSecs').textContent=pad(ts%60);
+}
+setInterval(tick,1000); tick();
+</script>
+<script>
+(function(){
+  /* ── Music engine: seamless across all pages ── */
+  if (!window.bgMusic) {
+    window.bgMusic = new Audio("assets/music/anju-song.mp3");
+    window.bgMusic.loop = true;
+    window.bgMusic.volume = 0.6;
+    window.bgMusic.preload = "auto";
+  }
+  // Save position continuously
+  window.bgMusic.ontimeupdate = function() {
+    try { localStorage.setItem("musicTime", window.bgMusic.currentTime); } catch(e){}
+  };
+  // Restore position + try autoplay
+  var _t = null;
+  try { _t = localStorage.getItem("musicTime"); } catch(e){}
+  if (_t) window.bgMusic.currentTime = parseFloat(_t);
+  window.bgMusic.play().catch(function(){});
+
+  // iOS Safari fix: play on very first touch anywhere on page
+  function _tryPlay(){ window.bgMusic.play().catch(function(){}); }
+  document.addEventListener("touchstart", _tryPlay, {once:true, passive:true});
+  document.addEventListener("click",      _tryPlay, {once:true, passive:true});
+
+  // Save before leaving
+  window.addEventListener("pagehide", function(){
+    try { localStorage.setItem("musicTime", window.bgMusic.currentTime); } catch(e){}
+  });
+  window.addEventListener("beforeunload", function(){
+    try { localStorage.setItem("musicTime", window.bgMusic.currentTime); } catch(e){}
+  });
+  // Pause/resume on visibility change (battery + lag fix)
+  document.addEventListener("visibilitychange", function(){
+    if (document.hidden) window.bgMusic.pause();
+    else window.bgMusic.play().catch(function(){});
+  });
+})();
+</script>
+</body>
+</html>
