@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>The Universe Is Searching…</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --gold:#f2c96e;--gold2:#ffe4a0;--gold3:#fff3d0;
+  --cyan:#80f4ff;--cyan2:#c0faff;
+  --pink:#ffaadd;--pink2:#ffd6f0;--pink3:#ff6eb0;
+  --violet:#c084fc;--violet2:#e0b4ff;
+  --rose:#ff8fab;
+  --white:#eef0ff;--dim:rgba(255,255,255,0.28);
+  --bg:#00000a;
+}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-family:'Cormorant Garamond',serif;color:var(--white);-webkit-font-smoothing:antialiased;touch-action:manipulation;}
+
+/* ── CANVAS LAYERS ── */
+#bgCanvas{position:fixed;inset:0;z-index:0;width:100%;height:100%}
+#overlay{position:fixed;inset:0;z-index:90;background:#000;opacity:0;pointer-events:none;transition:opacity 2s ease;}
+#overlay.dark{opacity:1}
+
+/* ── SCENE BASE ── */
+.scene{position:fixed;inset:0;z-index:10;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:max(28px,env(safe-area-inset-top)) 22px max(28px,env(safe-area-inset-bottom));opacity:0;pointer-events:none;transition:opacity 1.8s ease;}
+.scene.active{opacity:1;pointer-events:all}
+
+/* ── UNIVERSE DIALOG ── */
+.uni-dialog{text-align:center;padding:0 20px;opacity:0;transform:translateY(14px);transition:opacity 1.4s ease,transform 1.4s cubic-bezier(0.22,1,0.36,1);}
+.uni-dialog.show{opacity:1;transform:translateY(0)}
+.uni-dialog-tag{font-family:'Space Mono',monospace;font-size:clamp(8px,2.2vw,11px);letter-spacing:0.28em;color:rgba(128,244,255,0.36);margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px}
+.uni-dialog-pulse{width:5px;height:5px;border-radius:50%;background:var(--cyan);animation:udp 1.6s ease-in-out infinite;flex-shrink:0}
+@keyframes udp{0%,100%{opacity:0.25;transform:scale(0.7)}50%{opacity:1;transform:scale(1.4)}}
+.uni-dialog-text{font-family:'Cormorant Garamond',serif;font-size:clamp(0.92rem,4.2vw,1.22rem);font-weight:300;font-style:italic;color:var(--cyan2);line-height:1.85;letter-spacing:0.03em;text-shadow:0 0 28px rgba(128,244,255,0.32);max-width:min(340px,90vw);margin:0 auto}
+
+/* ── SCENE 1 — PORTAL ── */
+#scene1{justify-content:center;align-items:center;}
+#portalScene1{position:absolute;inset:0;width:100%;height:100%}
+.s1-content{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;text-align:center;}
+.s1-eyebrow{font-family:'Space Mono',monospace;font-size:0.40rem;letter-spacing:0.38em;color:rgba(192,132,252,0.5);margin-bottom:18px;opacity:0;animation:s1fade 2s ease 0.5s forwards}
+.s1-title{font-family:'Cinzel',serif;font-size:clamp(0.95rem,5.5vw,1.6rem);letter-spacing:0.26em;font-weight:900;color:var(--gold2);text-shadow:0 0 30px rgba(242,201,110,0.8),0 0 80px rgba(242,201,110,0.4),0 0 160px rgba(192,132,252,0.3);text-transform:uppercase;line-height:1.5;opacity:0;animation:s1fade 2s ease 1s forwards}
+.s1-sub{font-family:'Cormorant Garamond',serif;font-size:clamp(0.82rem,3.4vw,1.05rem);font-style:italic;letter-spacing:0.14em;color:rgba(255,220,160,0.45);margin-top:10px;opacity:0;animation:s1fade 2s ease 1.8s forwards}
+@keyframes s1fade{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.s1-input-wrap{margin-top:clamp(24px,6vh,50px);display:flex;flex-direction:column;align-items:center;opacity:0;animation:s1fade 2s ease 2.4s forwards}
+.inp-lbl{font-family:'Space Mono',monospace;font-size:0.40rem;letter-spacing:0.28em;color:rgba(192,132,252,0.55);display:block;margin-bottom:14px;text-transform:uppercase}
+#codeInput{background:transparent;border:none;border-bottom:1px solid rgba(242,201,110,0.35);color:var(--gold2);font-family:'Cinzel',serif;font-size:2.2rem;letter-spacing:0.8em;padding:10px 20px;outline:none;text-align:center;caret-color:var(--gold);-webkit-appearance:none;transition:border-color 0.4s,text-shadow 0.4s;width:220px;text-shadow:0 0 20px rgba(242,201,110,0.5)}
+#codeInput:focus{border-bottom-color:rgba(242,201,110,0.8);text-shadow:0 0 30px rgba(242,201,110,0.8)}
+#codeInput::placeholder{color:rgba(242,201,110,0.15);font-size:1rem;letter-spacing:0.4em}
+.errmsg{font-family:'Space Mono',monospace;font-size:0.42rem;color:rgba(128,244,255,0.8);text-align:center;margin-top:14px;min-height:18px;line-height:1.9;letter-spacing:0.10em}
+.s1-hint{font-family:'Space Mono',monospace;font-size:0.38rem;letter-spacing:0.22em;color:rgba(192,132,252,0.28);margin-top:10px;animation:hintpulse 3s ease-in-out infinite}
+@keyframes hintpulse{0%,100%{opacity:0.2}50%{opacity:0.6}}
+
+/* ── SCENE 2 — COSMIC SEARCH ── */
+#scene2{background:transparent}
+#searchCanvas{position:absolute;inset:0;width:100%;height:100%}
+.s2-text{position:relative;z-index:2;text-align:center;display:flex;flex-direction:column;align-items:center;}
+.s2-label{font-family:'Space Mono',monospace;font-size:0.46rem;letter-spacing:0.28em;color:rgba(128,244,255,0.4);margin-bottom:18px;min-height:1.2em}
+#journeyMsg{font-family:'Cinzel',serif;font-size:clamp(0.78rem,3.5vw,0.94rem);letter-spacing:0.10em;color:var(--cyan2);text-align:center;min-height:4rem;text-shadow:0 0 16px rgba(128,244,255,0.7),0 0 40px rgba(128,244,255,0.3);line-height:2.1;padding:0 18px;max-width:320px}
+.s2-bar{width:180px;height:1px;background:rgba(128,244,255,0.08);margin:26px auto 0;border-radius:2px;overflow:hidden}
+.s2-fill{height:100%;width:0%;border-radius:2px;background:linear-gradient(90deg,var(--violet),var(--cyan));transition:width 1s ease}
+
+/* ── SCENE 3 — GALAXY / EARTH LOCK ── */
+#scene3{overflow:hidden}
+#galaxyCanvas{position:absolute;inset:0;width:100%;height:100%}
+.s3-content{position:relative;z-index:2;text-align:center;display:flex;flex-direction:column;align-items:center}
+.s3-micro{font-family:'Space Mono',monospace;font-size:0.44rem;letter-spacing:0.32em;color:rgba(128,244,255,0.36);margin-bottom:14px;opacity:0;transition:opacity 1.5s ease}
+.s3-micro.show{opacity:1}
+#alignMsg{font-family:'Cinzel',serif;font-size:clamp(0.58rem,2.3vw,0.76rem);letter-spacing:0.14em;color:var(--dim);text-align:center;min-height:4rem;line-height:2.4;position:relative;z-index:2}
+
+/* ── SCENE 4 — PLANETS / TIMELINE ── */
+#scene4{overflow-y:auto;-webkit-overflow-scrolling:touch}
+#planetCanvas{position:absolute;inset:0;width:100%;height:100%}
+.s4-title{font-family:'Cinzel',serif;font-size:clamp(0.72rem,2.9vw,0.92rem);letter-spacing:0.24em;color:var(--cyan);margin-bottom:26px;text-shadow:0 0 16px rgba(128,244,255,0.55);text-align:center;position:relative;z-index:2}
+.timeline{width:min(320px,90vw);position:relative;z-index:2}
+.tl-track{position:absolute;left:16px;top:8px;bottom:8px;width:1px;background:linear-gradient(180deg,rgba(128,244,255,0.8),rgba(242,201,110,0.55),rgba(255,110,168,0.35),rgba(192,132,252,0.18),transparent)}
+.tl-item{display:flex;align-items:flex-start;margin-bottom:24px;padding-left:38px;position:relative;opacity:0;transform:translateX(-24px);transition:opacity 1.2s ease,transform 1.2s cubic-bezier(0.22,1,0.36,1)}
+.tl-item.show{opacity:1;transform:translateX(0)}
+.tl-dot{position:absolute;left:10px;top:6px;width:13px;height:13px;border-radius:50%;background:var(--cyan);box-shadow:0 0 14px var(--cyan),0 0 30px rgba(128,244,255,0.45)}
+.tl-text{font-family:'Cormorant Garamond',serif;font-size:clamp(0.88rem,3.5vw,1.05rem);letter-spacing:0.04em;color:var(--white);line-height:1.85;font-style:italic}
+.tl-year{font-family:'Cinzel',serif;color:var(--cyan);font-style:normal;font-size:0.76em;letter-spacing:0.12em;margin-right:7px}
+
+/* ── SCENE 5 — POEM ── */
+.poem-wrap{display:flex;flex-direction:column;align-items:center;padding:0 20px;position:relative;z-index:2;width:100%;overflow-y:auto}
+.pline{font-family:'Cormorant Garamond',serif;font-size:clamp(1.0rem,4.1vw,1.32rem);font-weight:300;letter-spacing:0.05em;line-height:2.15;text-align:center;color:var(--white);max-width:330px;opacity:0;transform:translateY(18px);transition:opacity 1.5s ease,transform 1.5s cubic-bezier(0.22,1,0.36,1)}
+.pline.show{opacity:1;transform:translateY(0)}
+.pline.gold{color:var(--gold2);font-style:italic;font-size:clamp(1.08rem,4.5vw,1.4rem);text-shadow:0 0 24px rgba(242,201,110,0.5)}
+.pline.tiny{font-size:clamp(0.70rem,2.5vw,0.86rem);color:rgba(255,255,255,0.28);font-style:italic}
+.pspc{height:14px}
+
+/* ── SCENE 6 — PORTAL ── */
+#scene6{overflow:hidden}
+#portalCanvas{position:absolute;inset:0;width:100%;height:100%}
+.portal-words{position:relative;z-index:2;text-align:center;opacity:0;transition:opacity 1.8s ease}
+.portal-words.show{opacity:1}
+.portal-words p{font-family:'Cinzel',serif;font-size:clamp(0.70rem,2.9vw,0.90rem);letter-spacing:0.22em;color:var(--cyan2);text-shadow:0 0 20px var(--cyan),0 0 50px rgba(128,244,255,0.35);line-height:2.3}
+
+/* ── SCENE 7 — HEARTBEAT ── */
+.heart-msg{font-family:'Cormorant Garamond',serif;font-size:clamp(0.98rem,4.5vw,1.45rem);font-weight:300;font-style:italic;letter-spacing:0.05em;line-height:1.95;text-align:center;color:var(--white);max-width:350px;opacity:0;transition:opacity 2.2s ease;text-shadow:0 0 40px rgba(255,170,221,0.12)}
+.heart-msg.show{opacity:1}
+.heart-msg .hac{color:var(--pink2);text-shadow:0 0 22px rgba(255,170,221,0.7);font-size:1.3em}
+#orb-wrap{margin-top:clamp(24px,5vh,52px);opacity:0;transition:opacity 1.8s ease;display:flex;flex-direction:column;align-items:center;}
+#orb-wrap.show{opacity:1}
+.orb-btn{position:relative;cursor:pointer;border:none;background:transparent;padding:0;-webkit-tap-highlight-color:transparent}
+.orb-glow{position:absolute;inset:-25px;border-radius:50%;background:radial-gradient(circle,rgba(242,201,110,0.12) 0%,transparent 70%);animation:orbG 3.5s ease-in-out infinite}
+@keyframes orbG{0%,100%{transform:scale(0.75);opacity:0.4}50%{transform:scale(1.3);opacity:1}}
+.orb-r1{position:absolute;inset:-12px;border-radius:50%;border:1px solid rgba(242,201,110,0.3);animation:rp 3s ease-in-out infinite}
+.orb-r2{position:absolute;inset:-26px;border-radius:50%;border:1px solid rgba(242,201,110,0.15);animation:rp 3s ease-in-out infinite 0.8s}
+.orb-r3{position:absolute;inset:-44px;border-radius:50%;border:1px solid rgba(242,201,110,0.07);animation:rp 3s ease-in-out infinite 1.6s}
+@keyframes rp{0%,100%{transform:scale(1);opacity:0.6}50%{transform:scale(1.07);opacity:1}}
+.orb-circle{width:84px;height:84px;border-radius:50%;background:radial-gradient(circle at 38% 32%,rgba(242,201,110,0.25) 0%,rgba(100,60,8,0.18) 50%,rgba(0,0,0,0.45) 100%);border:1px solid rgba(242,201,110,0.5);box-shadow:0 0 28px rgba(242,201,110,0.28),0 0 70px rgba(242,201,110,0.1),inset 0 0 24px rgba(242,201,110,0.08);display:flex;align-items:center;justify-content:center;font-size:1.9rem;transition:transform 0.3s ease,box-shadow 0.3s ease}
+.orb-circle:active{transform:scale(0.91);box-shadow:0 0 48px rgba(242,201,110,0.5),0 0 110px rgba(242,201,110,0.2)}
+.orb-label{font-family:'Cinzel',serif;font-size:0.48rem;letter-spacing:0.32em;color:rgba(242,201,110,0.48);text-transform:uppercase;margin-top:28px;animation:lb 3.2s ease-in-out infinite}
+@keyframes lb{0%,100%{opacity:0.3;letter-spacing:0.32em}50%{opacity:0.85;letter-spacing:0.38em}}
+
+/* ── SCENE 8 — DEEP BLESSINGS ── */
+#scene8{justify-content:flex-start;padding:clamp(24px,5vh,44px) 22px 80px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.dv{font-family:'Cormorant Garamond',serif;font-size:clamp(0.92rem,4.2vw,1.25rem);font-weight:300;font-style:italic;letter-spacing:0.04em;line-height:2.2;text-align:center;color:var(--white);max-width:370px;opacity:0;transform:translateY(18px);transition:opacity 1.6s ease,transform 1.6s ease;margin-bottom:2px}
+.dv.show{opacity:1;transform:translateY(0)}
+.dv.rose{color:var(--pink2);text-shadow:0 0 22px rgba(255,150,200,0.3)}
+.dv.gold-text{color:var(--gold2);font-style:normal;font-size:clamp(0.75rem,2.9vw,0.95rem);letter-spacing:0.13em;font-family:'Cinzel',serif;line-height:2.6;text-shadow:0 0 18px rgba(242,201,110,0.32)}
+.ds{height:20px}
+.dhr{height:1px;width:110px;margin:6px auto;background:linear-gradient(90deg,transparent,rgba(242,201,110,0.3),transparent)}
+
+/* ── SCENE 9 — NAME REVEAL ── */
+#scene9{overflow-y:auto;-webkit-overflow-scrolling:touch;background:transparent;justify-content:flex-start;padding:clamp(18px,4vh,28px) 22px 70px}
+#nameCanvas{position:fixed;inset:0;width:100%;height:100%;z-index:0}
+.s9-content{position:relative;z-index:2;text-align:center;display:flex;flex-direction:column;align-items:center;gap:0;width:100%}
+.s9-above{font-family:'Space Mono',monospace;font-size:clamp(8px,2.2vw,11px);letter-spacing:0.28em;color:rgba(128,244,255,0.38);margin-bottom:6px;opacity:0;transition:opacity 2s ease}
+.s9-above.show{opacity:1}
+.s9-found-label{font-family:'Space Mono',monospace;font-size:clamp(9px,2.4vw,13px);letter-spacing:0.3em;color:rgba(242,201,110,0.5);margin-bottom:10px;opacity:0;transform:translateY(8px);transition:opacity 1.5s ease,transform 1.5s ease}
+.s9-found-label.show{opacity:1;transform:translateY(0)}
+#revealedName{font-family:'Cinzel',serif;font-size:clamp(2.8rem,13vw,5.5rem);letter-spacing:0.22em;font-weight:900;
+  color:var(--gold);
+  text-shadow:0 0 20px var(--gold),0 0 55px rgba(242,201,110,0.6),0 0 120px rgba(242,201,110,0.25),0 0 240px rgba(255,200,80,0.12);
+  margin-bottom:8px;opacity:0;transform:scale(0.2) translateY(60px);
+  transition:opacity 2.8s cubic-bezier(0.16,1,0.3,1),transform 2.8s cubic-bezier(0.16,1,0.3,1)}
+#revealedName.show{opacity:1;transform:scale(1) translateY(0)}
+.s9-below{font-family:'Cormorant Garamond',serif;font-size:clamp(0.9rem,3.8vw,1.18rem);font-style:italic;color:rgba(255,244,200,0.6);letter-spacing:0.08em;opacity:0;transition:opacity 2s ease;margin-top:4px;text-shadow:0 0 20px rgba(242,201,110,0.3)}
+.s9-below.show{opacity:1}
+
+/* ── FINAL CONTINUE ── */
+#finalWrap{margin-top:16px;width:100%;display:flex;flex-direction:column;align-items:center;gap:10px;opacity:0;transform:translateY(24px);transition:opacity 2s ease,transform 2s ease}
+#finalWrap.show{opacity:1;transform:translateY(0)}
+.final-blessing{font-family:'Cormorant Garamond',serif;font-size:clamp(0.9rem,3.6vw,1.12rem);font-style:italic;color:rgba(255,244,200,0.55);letter-spacing:0.06em;text-align:center;max-width:300px;line-height:1.9;margin-bottom:12px;text-shadow:0 0 18px rgba(242,201,110,0.18)}
+#continueBtn{position:relative;cursor:pointer;border:1px solid rgba(242,201,110,0.42);border-radius:60px;background:rgba(242,201,110,0.04);padding:17px 52px;color:var(--gold2);font-family:'Cinzel',serif;font-size:0.60rem;letter-spacing:0.36em;text-transform:uppercase;-webkit-tap-highlight-color:transparent;outline:none;overflow:hidden;animation:cbr 3.5s ease-in-out infinite}
+@keyframes cbr{0%,100%{box-shadow:0 0 16px rgba(242,201,110,0.1)}50%{box-shadow:0 0 38px rgba(242,201,110,0.28),0 0 90px rgba(242,201,110,0.1)}}
+#continueBtn::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(242,201,110,0.07),transparent);pointer-events:none}
+#continueBtn::after{content:'';position:absolute;top:0;left:-130%;width:50%;height:100%;background:linear-gradient(90deg,transparent,rgba(242,201,110,0.18),transparent);animation:cbs 5s ease-in-out infinite 2s}
+@keyframes cbs{0%{left:-130%}100%{left:160%}}
+#continueBtn:active{background:rgba(242,201,110,0.14);border-color:rgba(242,201,110,0.7)}
+.cont-hint{font-family:'Space Mono',monospace;font-size:0.42rem;letter-spacing:0.22em;color:rgba(242,201,110,0.28);animation:ch 3s ease-in-out infinite}
+@keyframes ch{0%,100%{opacity:0.25}50%{opacity:0.65}}
+
+/* ── SPARKLES ── */
+.sparkle{position:fixed;pointer-events:none;z-index:30;animation:spk 5s ease-out forwards;opacity:0}
+@keyframes spk{0%{opacity:0;transform:translateY(0) scale(0.3) rotate(0deg)}10%{opacity:1}70%{opacity:0.7}100%{opacity:0;transform:translateY(-190px) scale(1.4) rotate(50deg)}}
+.cursor::after{content:'▍';animation:blink 0.9s step-end infinite;color:var(--cyan);opacity:0.8}
+@keyframes blink{0%,100%{opacity:0.8}50%{opacity:0}}
+
+/* ── EXTRA SMALL SCREENS (height < 680px) ── */
+@media (max-height: 680px) {
+  .s1-title{font-size:clamp(0.85rem,5vw,1.2rem)!important}
+  .s1-input-wrap{margin-top:18px!important}
+  .uni-dialog-text{font-size:clamp(0.85rem,4vw,1.1rem)!important;line-height:1.75!important}
+  #revealedName{font-size:clamp(2.2rem,11vw,4rem)!important}
+  .heart-msg{font-size:clamp(0.88rem,4.2vw,1.2rem)!important;line-height:1.8!important}
+  #orb-wrap{margin-top:18px!important}
+  .pline{font-size:clamp(0.88rem,3.8vw,1.1rem)!important;line-height:1.85!important}
+  .dv{font-size:clamp(0.85rem,3.8vw,1.1rem)!important;line-height:2!important}
+  .orb-circle{width:66px!important;height:66px!important}
+  .s9-found-label{margin-bottom:6px!important}
+  #finalWrap{margin-top:10px!important}
+  .final-blessing{font-size:clamp(0.78rem,3.2vw,0.95rem)!important;line-height:1.75!important;margin-bottom:8px!important}
+  #continueBtn{padding:13px 36px!important}
+  .ds{height:10px!important}
+  [style*="height:24px"]{height:10px!important}
+}
+
+/* ── WIDE MOBILE / LANDSCAPE ── */
+@media (max-height: 480px) {
+  #revealedName{font-size:clamp(1.8rem,8vw,3rem)!important}
+  .heart-msg{font-size:0.85rem!important}
+  #orb-wrap{margin-top:12px!important}
+}
+</style>
+</head>
+<body>
+<canvas id="bgCanvas"></canvas>
+<div id="overlay"></div>
+
+<!-- SCENE 1 — DIVINE PORTAL -->
+<div class="scene active" id="scene1">
+  <canvas id="portalScene1"></canvas>
+  <div class="s1-content">
+    <div class="s1-eyebrow">✦ &nbsp; a soul has been summoned &nbsp; ✦</div>
+    <div class="s1-title">The Universe<br>Has Called You Here</div>
+    <div class="s1-sub">only the one who is meant may enter</div>
+    <div class="s1-input-wrap">
+      <label class="inp-lbl" for="codeInput">✦ &nbsp; enter your birth code &nbsp; ✦</label>
+      <input id="codeInput" type="tel" maxlength="4" placeholder="· · · ·" autocomplete="off" inputmode="numeric"/>
+      <div class="errmsg" id="errorMsg"></div>
+      <div class="s1-hint">d d m m</div>
+    </div>
+  </div>
+</div>
+
+<!-- SCENE 2 — COSMIC SEARCH -->
+<div class="scene" id="scene2">
+  <canvas id="searchCanvas"></canvas>
+  <div class="s2-text">
+    <div class="uni-dialog" id="uniDialog2">
+      <div class="uni-dialog-tag"><div class="uni-dialog-pulse"></div><span>THE UNIVERSE SPEAKS</span></div>
+      <div class="uni-dialog-text" id="uniText2"></div>
+    </div>
+    <div style="height:24px"></div>
+    <div class="s2-label" id="s2label">INITIATING COSMIC SCAN</div>
+    <div id="journeyMsg"></div>
+    <div class="s2-bar"><div class="s2-fill" id="s2fill"></div></div>
+  </div>
+</div>
+
+<!-- SCENE 3 — GALAXY / EARTH -->
+<div class="scene" id="scene3">
+  <canvas id="galaxyCanvas"></canvas>
+  <div class="s3-content">
+    <div class="uni-dialog" id="uniDialog3">
+      <div class="uni-dialog-tag"><div class="uni-dialog-pulse"></div><span>THE UNIVERSE SPEAKS</span></div>
+      <div class="uni-dialog-text" id="uniText3"></div>
+    </div>
+    <div style="height:18px"></div>
+    <div class="s3-micro" id="s3micro">— SIGNAL LOCKED ON EARTH —</div>
+    <div id="alignMsg"></div>
+  </div>
+</div>
+
+<!-- SCENE 4 — PLANETS / TIMELINE -->
+<div class="scene" id="scene4">
+  <canvas id="planetCanvas"></canvas>
+  <div class="uni-dialog" id="uniDialog4" style="position:relative;z-index:2;margin-bottom:16px">
+    <div class="uni-dialog-tag"><div class="uni-dialog-pulse"></div><span>THE UNIVERSE SPEAKS</span></div>
+    <div class="uni-dialog-text" id="uniText4"></div>
+  </div>
+  <div class="s4-title">Timeline of Fate</div>
+  <div class="timeline">
+    <div class="tl-track"></div>
+    <div class="tl-item"><div class="tl-dot"></div><div class="tl-text"><span class="tl-year">[2002]</span> A star descended quietly into the world</div></div>
+    <div class="tl-item"><div class="tl-dot" style="background:var(--gold);box-shadow:0 0 14px var(--gold)"></div><div class="tl-text">Years of wonder drifted through the cosmos…</div></div>
+    <div class="tl-item"><div class="tl-dot" style="background:var(--pink);box-shadow:0 0 14px var(--pink)"></div><div class="tl-text">Among infinite souls, one signature glowed differently…</div></div>
+    <div class="tl-item"><div class="tl-dot" style="background:#fff;box-shadow:0 0 14px #fff"></div><div class="tl-text">And the universe pointed — to exactly this soul.</div></div>
+  </div>
+</div>
+
+<!-- SCENE 5 — POEM -->
+<div class="scene" id="scene5">
+  <div class="uni-dialog" id="uniDialog5" style="margin-bottom:12px">
+    <div class="uni-dialog-tag"><div class="uni-dialog-pulse"></div><span>THE UNIVERSE SPEAKS</span></div>
+    <div class="uni-dialog-text" id="uniText5"></div>
+  </div>
+  <div class="poem-wrap">
+    <div class="pline">Out of eight billion heartbeats…</div>
+    <div class="pline">I wandered through every single one.</div>
+    <div class="pspc"></div>
+    <div class="pline gold">Only one made the cosmos pause.</div>
+    <div class="pspc"></div>
+    <div class="pline">Only one made the stars hold their breath.</div>
+    <div class="pspc"></div>
+    <div class="pline tiny">The universe whispers your name through every dawn it creates.</div>
+  </div>
+</div>
+
+<!-- SCENE 6 — PORTAL OPENING -->
+<div class="scene" id="scene6">
+  <canvas id="portalCanvas"></canvas>
+  <div class="uni-dialog" id="uniDialog6" style="position:relative;z-index:2;margin-bottom:22px">
+    <div class="uni-dialog-tag"><div class="uni-dialog-pulse"></div><span>THE UNIVERSE SPEAKS</span></div>
+    <div class="uni-dialog-text" id="uniText6"></div>
+  </div>
+  <div class="portal-words" id="portalText"><p>A dimension opens<br>that was built for you alone…</p></div>
+</div>
+
+<!-- SCENE 7 — HEARTBEAT ORB -->
+<div class="scene" id="scene7">
+  <div class="uni-dialog" id="uniDialog7" style="margin-bottom:12px">
+    <div class="uni-dialog-tag"><div class="uni-dialog-pulse"></div><span>THE UNIVERSE SPEAKS</span></div>
+    <div class="uni-dialog-text" id="uniText7"></div>
+  </div>
+  <div class="heart-msg" id="heartMsg">
+    Every pulse of this universe<br>
+    carries a blessing wrapped in light<br>
+    and it travels only toward<br>
+    one soul… <span class="hac">♡</span>
+  </div>
+  <div id="orb-wrap">
+    <div class="orb-btn" id="orbBtn">
+      <div class="orb-glow"></div>
+      <div class="orb-r1"></div><div class="orb-r2"></div><div class="orb-r3"></div>
+      <div class="orb-circle">✦</div>
+    </div>
+    <div class="orb-label">touch to receive</div>
+  </div>
+</div>
+
+<!-- SCENE 8 — DEEP BLESSINGS -->
+<div class="scene" id="scene8">
+  <div class="uni-dialog" id="uniDialog8" style="margin-bottom:14px">
+    <div class="uni-dialog-tag"><div class="uni-dialog-pulse"></div><span>THE UNIVERSE SPEAKS</span></div>
+    <div class="uni-dialog-text" id="uniText8"></div>
+  </div>
+  <div class="dv">In every corner of the infinite cosmos,</div>
+  <div class="dv">I searched across time and silence…</div>
+  <div class="ds"></div>
+  <div class="dv rose">Through galaxies that have never been named,</div>
+  <div class="dv rose">Through stars that burned and stars that faded…</div>
+  <div class="ds"></div>
+  <div class="dv">Through every dream that ever floated in the night,</div>
+  <div class="dv">through every prayer whispered into darkness…</div>
+  <div class="ds"></div>
+  <div class="dhr"></div>
+  <div class="ds"></div>
+  <div class="dv">I searched because I needed to find</div>
+  <div class="dv gold-text">— the most beautiful soul in existence —</div>
+  <div class="ds"></div>
+  <div class="dv">And after all that searching across the entire universe…</div>
+  <div class="ds"></div>
+  <div id="finalWrap8Btn" style="opacity:0;transform:translateY(20px);transition:opacity 1.8s ease,transform 1.8s ease;display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:18px">
+    <button id="toRevealBtn" style="position:relative;cursor:pointer;border:1px solid rgba(128,244,255,0.38);border-radius:60px;background:rgba(128,244,255,0.04);padding:15px 44px;color:var(--cyan2);font-family:'Cinzel',serif;font-size:0.58rem;letter-spacing:0.32em;text-transform:uppercase;outline:none;overflow:hidden;animation:cbr 3.5s ease-in-out infinite">✦ &nbsp; Reveal &nbsp; ✦</button>
+    <div style="font-family:'Space Mono',monospace;font-size:0.40rem;letter-spacing:0.22em;color:rgba(128,244,255,0.25);animation:ch 3s ease-in-out infinite">the answer awaits you</div>
+  </div>
+</div>
+
+<!-- SCENE 9 — NAME REVEAL -->
+<div class="scene" id="scene9">
+  <canvas id="nameCanvas"></canvas>
+  <div class="s9-content">
+    <div class="s9-above" id="s9above">✦ &nbsp; — the universe found — &nbsp; ✦</div>
+    <div class="uni-dialog" id="uniDialog9" style="margin-bottom:14px">
+      <div class="uni-dialog-tag"><div class="uni-dialog-pulse"></div><span>THE UNIVERSE SPEAKS</span></div>
+      <div class="uni-dialog-text" id="uniText9"></div>
+    </div>
+    <div class="s9-found-label" id="s9label">— ACROSS ALL CREATION, ONLY ONE —</div>
+    <div id="revealedName">Anju</div>
+    <div class="s9-below" id="s9below">the one the universe chose</div>
+
+    <div id="finalWrap">
+      <div class="final-blessing" id="finalBlessing"></div>
+      <button id="continueBtn">✦ &nbsp; Entry to Earth &nbsp; ✦</button>
+      <div class="cont-hint">your journey on earth begins</div>
+    </div>
+  </div>
+</div>
+
+<script>
+
+/* ═══════════════════════════════════════════════════
+   COSMIC SOUND ENGINE  —  Web Audio API, zero files
+   Layers:
+   1. Deep space drone  (filtered noise, very low)
+   2. Cosmic hum        (sine sub-bass, slow LFO)
+   3. Stellar shimmer   (high rand pings, sparse)
+   4. Warp rush         (noise sweep, scene 2 only)
+   5. Portal pulse      (resonant sine, scene 6)
+   6. Reveal swell      (major chord rise, scene 9)
+═══════════════════════════════════════════════════ */
+let ACTX=null, masterGain=null, _audioStarted=false;
+
+function initAudio(){
+  if(_audioStarted)return;
+  _audioStarted=true;
+  try{
+    ACTX=new(window.AudioContext||window.webkitAudioContext)();
+    masterGain=ACTX.createGain();
+    masterGain.gain.setValueAtTime(0,ACTX.currentTime);
+    masterGain.gain.linearRampToValueAtTime(0.7,ACTX.currentTime+3);
+    masterGain.connect(ACTX.destination);
+    startDrone();
+    startHum();
+    scheduleShimmer();
+  }catch(e){console.warn('Audio not available',e);}
+}
+
+/* ── 1. DEEP SPACE DRONE — filtered noise ── */
+function startDrone(){
+  const buf=ACTX.createBuffer(1,ACTX.sampleRate*4,ACTX.sampleRate);
+  const d=buf.getChannelData(0);
+  for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1);
+  const src=ACTX.createBufferSource();
+  src.buffer=buf;src.loop=true;
+
+  const lp=ACTX.createBiquadFilter();
+  lp.type='lowpass';lp.frequency.value=180;lp.Q.value=2.5;
+
+  const hp=ACTX.createBiquadFilter();
+  hp.type='highpass';hp.frequency.value=28;hp.Q.value=0.8;
+
+  const g=ACTX.createGain();g.gain.value=0.18;
+
+  /* slow LFO on cutoff — makes it breathe */
+  const lfo=ACTX.createOscillator();
+  lfo.frequency.value=0.07;
+  const lfoG=ACTX.createGain();lfoG.gain.value=60;
+  lfo.connect(lfoG);lfoG.connect(lp.frequency);
+  lfo.start();
+
+  src.connect(hp);hp.connect(lp);lp.connect(g);g.connect(masterGain);
+  src.start();
+}
+
+/* ── 2. COSMIC HUM — sub-bass sine ── */
+function startHum(){
+  /* two slightly detuned sines for beating effect */
+  [36.5, 37.2, 55.1].forEach((freq,i)=>{
+    const osc=ACTX.createOscillator();
+    osc.type='sine';osc.frequency.value=freq;
+    const g=ACTX.createGain();g.gain.value=i<2?0.09:0.04;
+
+    /* slow volume LFO */
+    const lfo=ACTX.createOscillator();
+    lfo.frequency.value=0.04+i*0.015;
+    const lg=ACTX.createGain();lg.gain.value=0.035;
+    lfo.connect(lg);lg.connect(g.gain);
+    lfo.start();
+
+    osc.connect(g);g.connect(masterGain);
+    osc.start();
+  });
+}
+
+/* ── 3. STELLAR SHIMMER — sparse high pings ── */
+function scheduleShimmer(){
+  if(!ACTX||ACTX.state==='closed')return;
+  const delay=3000+Math.random()*7000;
+  setTimeout(()=>{
+    if(!ACTX||ACTX.state==='closed')return;
+    try{
+      const freq=[880,1108,1320,1480,1760,2093,2637][Math.floor(Math.random()*7)];
+      const osc=ACTX.createOscillator();
+      osc.type='sine';osc.frequency.value=freq;
+      const g=ACTX.createGain();
+      const now=ACTX.currentTime;
+      g.gain.setValueAtTime(0,now);
+      g.gain.linearRampToValueAtTime(0.035,now+0.04);
+      g.gain.exponentialRampToValueAtTime(0.0001,now+2.2);
+
+      /* light reverb — convolution would be heavy, use delay instead */
+      const dly=ACTX.createDelay(2);dly.delayTime.value=0.38;
+      const fb=ACTX.createGain();fb.gain.value=0.28;
+      const dg=ACTX.createGain();dg.gain.value=0.22;
+      osc.connect(g);g.connect(masterGain);
+      g.connect(dg);dg.connect(dly);dly.connect(fb);fb.connect(dly);fb.connect(masterGain);
+
+      osc.start(now);osc.stop(now+2.5);
+    }catch(e){}
+    scheduleShimmer();
+  },delay);
+}
+
+/* ── 4. WARP RUSH — scene 2 ── */
+function startWarpSound(){
+  if(!ACTX)return;
+  try{
+    const buf=ACTX.createBuffer(1,ACTX.sampleRate*2,ACTX.sampleRate);
+    const d=buf.getChannelData(0);
+    for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1);
+    const src=ACTX.createBufferSource();
+    src.buffer=buf;src.loop=true;
+
+    const bp=ACTX.createBiquadFilter();
+    bp.type='bandpass';bp.Q.value=1.2;
+
+    /* sweep filter up over time = warp feel */
+    bp.frequency.setValueAtTime(200,ACTX.currentTime);
+    bp.frequency.linearRampToValueAtTime(2400,ACTX.currentTime+18);
+
+    const g=ACTX.createGain();g.gain.value=0.10;
+    src.connect(bp);bp.connect(g);g.connect(masterGain);
+    src.start();
+    /* stop after search scene ends ~22s */
+    src.stop(ACTX.currentTime+22);
+  }catch(e){}
+}
+
+/* ── 5. PORTAL PULSE — scene 6 resonant ring ── */
+function startPortalSound(){
+  if(!ACTX)return;
+  try{
+    [174.6,261.6,349.2].forEach((freq,i)=>{
+      const osc=ACTX.createOscillator();
+      osc.type='sine';osc.frequency.value=freq;
+      const g=ACTX.createGain();
+      const now=ACTX.currentTime;
+      g.gain.setValueAtTime(0,now);
+      g.gain.linearRampToValueAtTime(0.06-i*0.015,now+2);
+      g.gain.linearRampToValueAtTime(0,now+7);
+      osc.connect(g);g.connect(masterGain);
+      osc.start(now);osc.stop(now+7);
+    });
+  }catch(e){}
+}
+
+/* ── 6. REVEAL SWELL — scene 9 name burst ── */
+function playRevealSwell(){
+  if(!ACTX)return;
+  try{
+    /* Rising major chord: A3 C#4 E4 A4 */
+    [220,277.2,329.6,440,554.4,659.3].forEach((freq,i)=>{
+      const osc=ACTX.createOscillator();
+      osc.type='sine';osc.frequency.value=freq*0.5;
+      const osc2=ACTX.createOscillator();
+      osc2.type='triangle';osc2.frequency.value=freq;
+
+      const g=ACTX.createGain();
+      const now=ACTX.currentTime;
+      const delay=i*0.12;
+      g.gain.setValueAtTime(0,now);
+      g.gain.linearRampToValueAtTime(0.045,now+delay+0.6);
+      g.gain.linearRampToValueAtTime(0.02,now+delay+2.5);
+      g.gain.linearRampToValueAtTime(0,now+delay+6);
+
+      osc.connect(g);osc2.connect(g);g.connect(masterGain);
+      osc.start(now+delay);osc.stop(now+delay+6);
+      osc2.start(now+delay);osc2.stop(now+delay+6);
+    });
+
+    /* Golden shimmer burst */
+    for(let i=0;i<8;i++){
+      setTimeout(()=>{
+        if(!ACTX||ACTX.state==='closed')return;
+        try{
+          const freq=1760+Math.random()*1200;
+          const o=ACTX.createOscillator();o.type='sine';o.frequency.value=freq;
+          const g=ACTX.createGain();const now=ACTX.currentTime;
+          g.gain.setValueAtTime(0,now);
+          g.gain.linearRampToValueAtTime(0.025,now+0.03);
+          g.gain.exponentialRampToValueAtTime(0.0001,now+1.5);
+          o.connect(g);g.connect(masterGain);o.start(now);o.stop(now+1.5);
+        }catch(e){}
+      },i*180+200);
+    }
+  }catch(e){}
+}
+
+/* ── FADE MASTER OUT (for page exit) ── */
+function fadeOutAudio(dur=1.6){
+  if(!ACTX||!masterGain)return;
+  masterGain.gain.linearRampToValueAtTime(0,ACTX.currentTime+dur);
+}
+
+const CONFIG={accessCode:'0804',nextPage:'magic-mirror.html'};
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const $=id=>document.getElementById(id);
+
+const isMobile=window.innerWidth<600;
+const STAR_COUNT=isMobile?80:160;
+
+/* ═══════════════ BG CANVAS ═══════════════ */
+const bgCvs=$('bgCanvas'),bgCtx=bgCvs.getContext('2d');
+let bgW,bgH,bgStars=[],bgClouds=[],tick=0,warpMode=false,warpSpeed=0;
+function bgResize(){bgW=bgCvs.width=window.innerWidth;bgH=bgCvs.height=window.innerHeight;}
+function bgInit(){
+  bgStars=[];
+  for(let i=0;i<STAR_COUNT;i++) bgStars.push({x:Math.random()*bgW,y:Math.random()*bgH,r:Math.random()*1.7+0.15,a:Math.random()*0.7+0.18,dx:(Math.random()-0.5)*0.04,dy:(Math.random()-0.5)*0.04,spd:Math.random()*1.3+0.3,tw:Math.random()*Math.PI*2,hue:[220,200,260,220,180,300,340][Math.floor(Math.random()*7)]});
+  bgClouds=[];
+  const ch=[260,210,300,180,240,280,320,200];
+  for(let i=0;i<7;i++) bgClouds.push({x:Math.random()*bgW,y:Math.random()*bgH,rx:100+Math.random()*200,ry:60+Math.random()*120,hue:ch[i%ch.length],a:0.020+Math.random()*0.035,drift:(Math.random()-0.5)*0.006});
+}
+function bgDraw(){
+  bgCtx.clearRect(0,0,bgW,bgH);
+  for(const c of bgClouds){c.x+=c.drift;if(c.x>bgW+c.rx)c.x=-c.rx;if(c.x<-c.rx)c.x=bgW+c.rx;const g=bgCtx.createRadialGradient(c.x,c.y,0,c.x,c.y,c.rx);g.addColorStop(0,`hsla(${c.hue},65%,45%,${c.a})`);g.addColorStop(1,'transparent');bgCtx.beginPath();bgCtx.ellipse(c.x,c.y,c.rx,c.ry,0,0,Math.PI*2);bgCtx.fillStyle=g;bgCtx.fill();}
+  const cx=bgW/2,cy=bgH/2;tick+=0.01;
+  for(const s of bgStars){
+    if(warpMode&&warpSpeed>0){
+      const nx=s.x-cx,ny=s.y-cy,len=Math.sqrt(nx*nx+ny*ny)||1,v=warpSpeed*s.spd;
+      s.x+=(nx/len)*v;s.y+=(ny/len)*v;
+      if(s.x<0||s.x>bgW||s.y<0||s.y>bgH){s.x=cx+(Math.random()-0.5)*14;s.y=cy+(Math.random()-0.5)*14;}
+      const sl=v*s.spd*4;
+      bgCtx.beginPath();bgCtx.moveTo(s.x,s.y);bgCtx.lineTo(s.x-(nx/len)*sl,s.y-(ny/len)*sl);
+      bgCtx.strokeStyle=`hsla(${s.hue},65%,88%,${s.a*0.3})`;bgCtx.lineWidth=s.r*0.5;bgCtx.stroke();
+    }else{s.x+=s.dx;s.y+=s.dy;if(s.x<0)s.x=bgW;if(s.x>bgW)s.x=0;if(s.y<0)s.y=bgH;if(s.y>bgH)s.y=0;}
+    const tw=0.75+0.25*Math.sin(tick+s.tw);
+    bgCtx.beginPath();bgCtx.arc(s.x,s.y,s.r,0,Math.PI*2);
+    bgCtx.fillStyle=`hsla(${s.hue},50%,92%,${s.a*tw})`;bgCtx.fill();
+  }
+  requestAnimationFrame(bgDraw);
+}
+function shootingStar(){
+  if(document.hidden)return;
+  const sx=Math.random()*bgW,sy=Math.random()*bgH*0.55;
+  const ang=0.3+Math.random()*0.35,len=100+Math.random()*150;
+  const ex=sx+Math.cos(ang)*len,ey=sy+Math.sin(ang)*len;
+  const dur=500+Math.random()*700,t0=performance.now();
+  function frame(now){const p=Math.min((now-t0)/dur,1);if(p>=1)return;const x=sx+(ex-sx)*p,y=sy+(ey-sy)*p,tail=20*(1-p);bgCtx.beginPath();bgCtx.moveTo(x,y);bgCtx.lineTo(x-Math.cos(ang)*tail,y-Math.sin(ang)*tail);const g=bgCtx.createLinearGradient(x,y,x-Math.cos(ang)*tail,y-Math.sin(ang)*tail);g.addColorStop(0,'rgba(255,255,255,0.9)');g.addColorStop(1,'transparent');bgCtx.strokeStyle=g;bgCtx.lineWidth=1.3;bgCtx.stroke();requestAnimationFrame(frame);}
+  requestAnimationFrame(frame);
+}
+setInterval(shootingStar,3800);
+window.addEventListener('resize',()=>{bgResize();bgInit();});
+bgResize();bgInit();bgDraw();
+
+/* ═══════════════ SEARCH CANVAS ═══════════════ */
+const sCvs=$('searchCanvas'),sCtx=sCvs.getContext('2d');
+let sOn=false,sRaf,sAng=0;
+function sResize(){sCvs.width=window.innerWidth;sCvs.height=window.innerHeight;}
+function sDraw(){
+  if(!sOn)return;
+  const sw=sCvs.width,sh=sCvs.height,cx=sw/2,cy=sh/2;
+  sCtx.clearRect(0,0,sw,sh);sAng+=0.006;
+  for(let ring=1;ring<=6;ring++){const r=ring*Math.min(sw,sh)*0.075,p=0.5+0.5*Math.sin(sAng*2.2-ring*0.8);sCtx.beginPath();sCtx.arc(cx,cy,r,0,Math.PI*2);sCtx.strokeStyle=`rgba(128,244,255,${0.03+p*0.04})`;sCtx.lineWidth=1;sCtx.stroke();}
+  const bLen=Math.min(sw,sh)*0.44;
+  const bg=sCtx.createLinearGradient(cx,cy,cx+Math.cos(sAng)*bLen,cy+Math.sin(sAng)*bLen);
+  bg.addColorStop(0,'rgba(128,244,255,0.13)');bg.addColorStop(1,'rgba(128,244,255,0)');
+  sCtx.beginPath();sCtx.moveTo(cx,cy);sCtx.arc(cx,cy,bLen,sAng-0.3,sAng,false);sCtx.closePath();sCtx.fillStyle=bg;sCtx.fill();
+  sRaf=requestAnimationFrame(sDraw);
+}
+function startSearch(){sResize();sOn=true;sDraw();}
+function stopSearch(){sOn=false;cancelAnimationFrame(sRaf);}
+
+/* ═══════════════ GALAXY CANVAS ═══════════════ */
+const gCvs=$('galaxyCanvas'),gCtx=gCvs.getContext('2d');
+let gOn=false,gRaf,gAng=0,gP=0,gZoom=1,gZoomTarget=1,earthHighlight=0;
+const G_PLANETS=[
+  {orbit:0.18,speed:0.018,size:3,color:'#aaa'},{orbit:0.26,speed:0.011,size:4,color:'#e8c090'},
+  {orbit:0.35,speed:0.007,size:5.5,color:'#4fc3f7',isEarth:true},
+  {orbit:0.45,speed:0.004,size:4,color:'#e07060'},{orbit:0.58,speed:0.0018,size:9,color:'#c8a060',ring:true},
+];
+function gResize(){gCvs.width=window.innerWidth;gCvs.height=window.innerHeight;}
+function gDraw(){
+  if(!gOn)return;
+  const gw=gCvs.width,gh=gCvs.height,cx=gw/2,cy=gh/2;
+  gCtx.clearRect(0,0,gw,gh);gAng+=0.002;gP+=0.012;
+  gZoom+=(gZoomTarget-gZoom)*0.025;
+  gCtx.save();gCtx.translate(cx,cy);gCtx.scale(gZoom,gZoom);gCtx.translate(-cx,-cy);
+  const maxR=Math.min(gw,gh)*0.34;
+  const galaxyAlpha=Math.max(0,1-(gZoom-1)/3);
+  if(galaxyAlpha>0.01){
+    for(let arm=0;arm<3;arm++){const off=(arm/3)*Math.PI*2;for(let t=0;t<280;t+=2){const f=t/280,a=f*Math.PI*7+gAng+off,r=f*maxR,x=cx+Math.cos(a)*r,y=cy+Math.sin(a)*r,hue=36+f*28,al=f*0.42*(0.65+0.35*Math.sin(gP+f*5))*galaxyAlpha;gCtx.beginPath();gCtx.arc(x,y,1.2-f*0.5,0,Math.PI*2);gCtx.fillStyle=`hsla(${hue},88%,68%,${al})`;gCtx.fill();}}
+    const cg=gCtx.createRadialGradient(cx,cy,0,cx,cy,maxR*0.1);cg.addColorStop(0,`rgba(255,245,160,${(0.18+0.08*Math.sin(gP))*galaxyAlpha})`);cg.addColorStop(1,'transparent');gCtx.beginPath();gCtx.arc(cx,cy,maxR*0.1,0,Math.PI*2);gCtx.fillStyle=cg;gCtx.fill();
+  }
+  const solarAlpha=Math.min(1,(gZoom-1)*0.8);
+  if(solarAlpha>0.02){
+    const sunR=maxR*0.048;
+    const sg=gCtx.createRadialGradient(cx,cy,0,cx,cy,sunR*2.5);sg.addColorStop(0,`rgba(255,245,180,${0.9*solarAlpha})`);sg.addColorStop(0.4,`rgba(255,180,60,${0.4*solarAlpha})`);sg.addColorStop(1,'transparent');
+    gCtx.beginPath();gCtx.arc(cx,cy,sunR*2.5,0,Math.PI*2);gCtx.fillStyle=sg;gCtx.fill();
+    gCtx.beginPath();gCtx.arc(cx,cy,sunR,0,Math.PI*2);gCtx.fillStyle=`rgba(255,240,160,${solarAlpha})`;gCtx.fill();
+    for(const p of G_PLANETS){
+      const r=maxR*p.orbit;
+      gCtx.beginPath();gCtx.arc(cx,cy,r,0,Math.PI*2);gCtx.strokeStyle=`rgba(255,255,255,${0.04*solarAlpha})`;gCtx.lineWidth=1;gCtx.stroke();
+      const angle=gP*p.speed*60+p.orbit*10,px=cx+Math.cos(angle)*r,py=cy+Math.sin(angle)*r*0.42;
+      if(p.isEarth&&earthHighlight>0){
+        const eg=gCtx.createRadialGradient(px,py,0,px,py,p.size*6);eg.addColorStop(0,`rgba(79,195,247,${earthHighlight*0.7*solarAlpha})`);eg.addColorStop(1,'transparent');gCtx.beginPath();gCtx.arc(px,py,p.size*6,0,Math.PI*2);gCtx.fillStyle=eg;gCtx.fill();
+        if(earthHighlight>0.5){gCtx.font=`${0.42+earthHighlight*0.3}rem 'Space Mono'`;gCtx.fillStyle=`rgba(79,195,247,${(earthHighlight-0.5)*2*solarAlpha})`;gCtx.textAlign='center';gCtx.fillText('EARTH',px,py-p.size*3.5);}
+      }else{const pg=gCtx.createRadialGradient(px,py,0,px,py,p.size*2.5);pg.addColorStop(0,`rgba(128,200,220,${solarAlpha*0.8})`);pg.addColorStop(1,'transparent');gCtx.beginPath();gCtx.arc(px,py,p.size*2.5,0,Math.PI*2);gCtx.fillStyle=pg;gCtx.fill();}
+      gCtx.beginPath();gCtx.arc(px,py,p.size,0,Math.PI*2);gCtx.fillStyle=p.color;gCtx.globalAlpha=solarAlpha;gCtx.fill();gCtx.globalAlpha=1;
+      if(p.ring){gCtx.save();gCtx.translate(px,py);gCtx.scale(1,0.28);gCtx.beginPath();gCtx.arc(0,0,p.size*2,0,Math.PI*2);gCtx.strokeStyle=`rgba(200,160,96,${0.4*solarAlpha})`;gCtx.lineWidth=2;gCtx.stroke();gCtx.restore();}
+    }
+  }
+  gCtx.restore();
+  gRaf=requestAnimationFrame(gDraw);
+}
+function startGalaxy(){gResize();gOn=true;gZoom=1;gZoomTarget=1;earthHighlight=0;gDraw();}
+function stopGalaxy(){gOn=false;cancelAnimationFrame(gRaf);}
+
+/* ═══════════════ PLANET CANVAS ═══════════════ */
+const plCvs=$('planetCanvas'),plCtx=plCvs.getContext('2d');
+let plOn=false,plRaf,plT=0;
+const PLANETS=[
+  {orbit:0.30,speed:0.006,size:7,color:'#80f4ff',glow:'rgba(128,244,255,0.4)',ring:false},
+  {orbit:0.43,speed:0.0038,size:10,color:'#f2c96e',glow:'rgba(242,201,110,0.45)',ring:true},
+  {orbit:0.55,speed:0.0022,size:8,color:'#ff9bdc',glow:'rgba(255,155,220,0.4)',ring:false},
+  {orbit:0.67,speed:0.0015,size:12,color:'#c084fc',glow:'rgba(192,132,252,0.35)',ring:true},
+];
+function plResize(){plCvs.width=window.innerWidth;plCvs.height=window.innerHeight;}
+function plDraw(){
+  if(!plOn)return;
+  const pw=plCvs.width,ph=plCvs.height,cx=pw/2,cy=ph*0.5;
+  plCtx.clearRect(0,0,pw,ph);plT+=1;
+  const maxR=Math.min(pw,ph)*0.42;
+  const sg=plCtx.createRadialGradient(cx,cy,0,cx,cy,30);sg.addColorStop(0,'rgba(255,245,180,0.5)');sg.addColorStop(0.4,'rgba(242,201,110,0.18)');sg.addColorStop(1,'transparent');
+  plCtx.beginPath();plCtx.arc(cx,cy,30,0,Math.PI*2);plCtx.fillStyle=sg;plCtx.fill();
+  for(const p of PLANETS){
+    const r=maxR*p.orbit;plCtx.beginPath();plCtx.arc(cx,cy,r,0,Math.PI*2);plCtx.strokeStyle='rgba(255,255,255,0.05)';plCtx.lineWidth=1;plCtx.stroke();
+    const angle=plT*p.speed,px=cx+Math.cos(angle)*r,py=cy+Math.sin(angle)*r*0.38;
+    const pg=plCtx.createRadialGradient(px,py,0,px,py,p.size*3);pg.addColorStop(0,p.glow);pg.addColorStop(1,'transparent');
+    plCtx.beginPath();plCtx.arc(px,py,p.size*3,0,Math.PI*2);plCtx.fillStyle=pg;plCtx.fill();
+    plCtx.beginPath();plCtx.arc(px,py,p.size,0,Math.PI*2);plCtx.fillStyle=p.color;plCtx.fill();
+    if(p.ring){plCtx.save();plCtx.translate(px,py);plCtx.scale(1,0.3);plCtx.beginPath();plCtx.arc(0,0,p.size*2.2,0,Math.PI*2);plCtx.strokeStyle=p.color.replace(')',',0.45)').replace('rgb','rgba');plCtx.lineWidth=2;plCtx.stroke();plCtx.restore();}
+  }
+  plRaf=requestAnimationFrame(plDraw);
+}
+function startPlanets(){plResize();plOn=true;plDraw();}
+function stopPlanets(){plOn=false;cancelAnimationFrame(plRaf);}
+
+/* ═══════════════ PORTAL CANVAS ═══════════════ */
+const pCvs=$('portalCanvas'),pCtx=pCvs.getContext('2d');
+let pOn=false,pRaf,pAng=0;
+function pResize(){pCvs.width=window.innerWidth;pCvs.height=window.innerHeight;}
+function pDraw(){
+  if(!pOn)return;
+  const pw=pCvs.width,ph=pCvs.height,cx=pw/2,cy=ph/2;
+  pCtx.clearRect(0,0,pw,ph);pAng+=0.008;
+  const maxR=Math.min(pw,ph)*0.42;
+  for(let arm=0;arm<6;arm++){const off=(arm/6)*Math.PI*2;for(let t=0;t<240;t+=2){const f=t/240,a=f*Math.PI*9+pAng+off,r=f*maxR,x=cx+Math.cos(a)*r,y=cy+Math.sin(a)*r,hue=180+f*140+pAng*14;pCtx.beginPath();pCtx.arc(x,y,1.2-f*0.6,0,Math.PI*2);pCtx.fillStyle=`hsla(${hue},85%,72%,${f*0.48})`;pCtx.fill();}}
+  const cg=pCtx.createRadialGradient(cx,cy,0,cx,cy,maxR*0.24);cg.addColorStop(0,'rgba(128,244,255,0.22)');cg.addColorStop(1,'transparent');
+  pCtx.beginPath();pCtx.arc(cx,cy,maxR*0.24,0,Math.PI*2);pCtx.fillStyle=cg;pCtx.fill();
+  pRaf=requestAnimationFrame(pDraw);
+}
+function startPortal(){pResize();pOn=true;pDraw();}
+function stopPortal(){pOn=false;cancelAnimationFrame(pRaf);}
+
+/* ═══════════════ NAME REVEAL CANVAS ═══════════════ */
+const nCvs=$('nameCanvas'),nCtx=nCvs.getContext('2d');
+let nOn=false,nRaf,nT=0;
+function nResize(){nCvs.width=window.innerWidth;nCvs.height=window.innerHeight;}
+function nDraw(){
+  if(!nOn)return;
+  const nw=nCvs.width,nh=nCvs.height,cx=nw/2,cy=nh/2;
+  nCtx.clearRect(0,0,nw,nh);nT+=0.008;
+  /* Massive expanding rings */
+  for(let i=0;i<8;i++){
+    const phase=(nT+i*0.4)%(Math.PI*2),r=((phase/(Math.PI*2))*Math.min(nw,nh)*0.65)+10,al=0.5*(1-phase/(Math.PI*2));
+    const hue=36+i*14;
+    nCtx.beginPath();nCtx.arc(cx,cy,r,0,Math.PI*2);
+    nCtx.strokeStyle=`hsla(${hue},90%,72%,${al*0.3})`;nCtx.lineWidth=1.5;nCtx.stroke();
+  }
+  /* Golden particles orbiting */
+  for(let i=0;i<60;i++){
+    const a=(i/60)*Math.PI*2+nT*0.8,r=Math.min(nw,nh)*0.38*(0.5+0.5*Math.sin(nT*0.5+i*0.2));
+    const x=cx+Math.cos(a)*r,y=cy+Math.sin(a)*r*0.5;
+    const pulse=0.5+0.5*Math.sin(nT*3+i*0.5),hue=30+i*2;
+    nCtx.beginPath();nCtx.arc(x,y,1.0+pulse*1.2,0,Math.PI*2);
+    nCtx.fillStyle=`hsla(${hue},95%,75%,${0.15+pulse*0.35})`;nCtx.fill();
+  }
+  /* Core radial glow */
+  const cg=nCtx.createRadialGradient(cx,cy,0,cx,cy,Math.min(nw,nh)*0.22);
+  cg.addColorStop(0,`rgba(255,240,150,${0.12+0.06*Math.sin(nT*2)})`);
+  cg.addColorStop(0.4,`rgba(192,132,252,${0.06+0.03*Math.sin(nT)})`);
+  cg.addColorStop(1,'transparent');
+  nCtx.beginPath();nCtx.arc(cx,cy,Math.min(nw,nh)*0.22,0,Math.PI*2);nCtx.fillStyle=cg;nCtx.fill();
+  nRaf=requestAnimationFrame(nDraw);
+}
+function startNameCanvas(){nResize();nOn=true;nDraw();}
+function stopNameCanvas(){nOn=false;cancelAnimationFrame(nRaf);}
+
+/* ═══════════════ SCENE 1 PORTAL CANVAS ═══════════════ */
+const p1Cvs=$('portalScene1'),p1Ctx=p1Cvs.getContext('2d');
+let p1Ang=0,p1Raf,p1Shake=0;
+function p1Resize(){p1Cvs.width=window.innerWidth;p1Cvs.height=window.innerHeight;}
+function p1Draw(){
+  const w=p1Cvs.width,h=p1Cvs.height,cx=w/2,cy=h/2;
+  p1Ctx.clearRect(0,0,w,h);p1Ang+=0.004;
+  const baseR=Math.min(w,h)*0.3;
+  for(let i=0;i<5;i++){const r=baseR*(0.55+i*0.18),pulse=0.5+0.5*Math.sin(p1Ang*1.2-i*0.9),hue=270+i*18;p1Ctx.beginPath();p1Ctx.arc(cx,cy,r,0,Math.PI*2);p1Ctx.strokeStyle=`hsla(${hue},80%,65%,${0.04+pulse*0.06})`;p1Ctx.lineWidth=1+(i%2);p1Ctx.stroke();}
+  for(let arm=0;arm<6;arm++){const off=(arm/6)*Math.PI*2;p1Ctx.save();p1Ctx.translate(cx,cy);p1Ctx.rotate(p1Ang*0.6+off);const grad=p1Ctx.createLinearGradient(0,0,baseR*0.85,0);grad.addColorStop(0,'rgba(242,201,110,0.55)');grad.addColorStop(0.5,'rgba(192,132,252,0.2)');grad.addColorStop(1,'transparent');p1Ctx.beginPath();p1Ctx.moveTo(0,0);p1Ctx.lineTo(baseR*0.85,0);p1Ctx.strokeStyle=grad;p1Ctx.lineWidth=1;p1Ctx.stroke();p1Ctx.restore();}
+  for(let i=0;i<60;i++){const a=(i/60)*Math.PI*2-p1Ang*1.8,r=baseR*0.38,px=cx+Math.cos(a)*r,py=cy+Math.sin(a)*r,pulse=0.5+0.5*Math.sin(p1Ang*3+i*0.4);p1Ctx.beginPath();p1Ctx.arc(px,py,1.2+pulse*1.2,0,Math.PI*2);p1Ctx.fillStyle=`rgba(242,201,110,${0.2+pulse*0.5})`;p1Ctx.fill();}
+  const cg=p1Ctx.createRadialGradient(cx,cy,0,cx,cy,baseR*0.28);cg.addColorStop(0,`rgba(255,240,180,${0.18+0.1*Math.sin(p1Ang*2)})`);cg.addColorStop(0.3,`rgba(192,132,252,${0.08+0.05*Math.sin(p1Ang)})`);cg.addColorStop(1,'transparent');p1Ctx.beginPath();p1Ctx.arc(cx,cy,baseR*0.28,0,Math.PI*2);p1Ctx.fillStyle=cg;p1Ctx.fill();
+  p1Ctx.save();p1Ctx.translate(cx,cy);p1Ctx.beginPath();p1Ctx.ellipse(0,0,baseR*0.13,baseR*0.06,0,0,Math.PI*2);p1Ctx.strokeStyle=`rgba(242,201,110,${0.3+0.2*Math.sin(p1Ang*2)})`;p1Ctx.lineWidth=1;p1Ctx.stroke();p1Ctx.beginPath();p1Ctx.arc(0,0,baseR*0.045,0,Math.PI*2);p1Ctx.fillStyle=`rgba(242,201,110,${0.4+0.3*Math.sin(p1Ang*2)})`;p1Ctx.fill();p1Ctx.restore();
+  if(p1Shake>0){for(let r=0;r<3;r++){const rr=baseR*(0.32+r*0.08);p1Ctx.beginPath();p1Ctx.arc(cx,cy,rr,0,Math.PI*2);p1Ctx.strokeStyle=`rgba(255,80,80,${p1Shake*0.6})`;p1Ctx.lineWidth=2;p1Ctx.stroke();}p1Shake-=0.04;if(p1Shake<0)p1Shake=0;}
+  p1Raf=requestAnimationFrame(p1Draw);
+}
+p1Resize();p1Draw();
+window.addEventListener('resize',p1Resize);
+
+/* ═══════════════ SCENE MANAGER ═══════════════ */
+const SCENES=['scene1','scene2','scene3','scene4','scene5','scene6','scene7','scene8','scene9'];
+function showScene(id){SCENES.forEach(s=>$(s).classList.remove('active'));$(id).classList.add('active');}
+const ov=$('overlay');
+function fadeToBlack(cb,dur=1800){ov.classList.add('dark');setTimeout(()=>{cb();ov.classList.remove('dark');},dur);}
+
+/* ═══════════════ TYPING ═══════════════ */
+function typeText(el,text,speed=34){
+  return new Promise(res=>{el.textContent='';el.classList.add('cursor');let i=0;const iv=setInterval(()=>{el.textContent+=text[i++];if(i>=text.length){clearInterval(iv);el.classList.remove('cursor');res();}},speed);});
+}
+
+/* ═══════════════ UNIVERSE DIALOG ═══════════════ */
+async function speakUniverse(sceneNum,text,delay=500){
+  await sleep(delay);
+  const box=$('uniDialog'+sceneNum),textEl=$('uniText'+sceneNum);
+  if(!box||!textEl)return;
+  box.classList.add('show');
+  await typeText(textEl,text,24);
+}
+
+/* ═══════════════ SPARKLES ═══════════════ */
+const EMOJIS=['✦','✧','♡','★','✿','❋','⋆','❀','♔','·','°','˚','✵','✨','🌟'];
+function spawnSparkles(total=28,interval=480){
+  if(document.hidden)return;let n=0;
+  function one(){if(n>=total||document.hidden)return;const el=document.createElement('div');el.className='sparkle';el.textContent=EMOJIS[Math.floor(Math.random()*EMOJIS.length)];const cols=['var(--gold)','var(--pink)','var(--cyan)','#fff','var(--pink2)','var(--violet)','var(--gold2)'];el.style.cssText=`left:${Math.random()*86+4}vw;top:${Math.random()*60+28}vh;animation-duration:${4+Math.random()*3}s;color:${cols[Math.floor(Math.random()*cols.length)]};font-size:${0.65+Math.random()*1.1}rem;`;document.body.appendChild(el);el.addEventListener('animationend',()=>el.remove(),{once:true});n++;setTimeout(one,interval+Math.random()*260);}
+  one();
+}
+
+/* ═══════════════ SCENE 1 ═══════════════ */
+const codeInput=$('codeInput'),errorMsg=$('errorMsg');
+codeInput.addEventListener('input',()=>{if(codeInput.value.length===4)checkCode(codeInput.value);});
+function checkCode(val){
+  if(val===CONFIG.accessCode){
+    codeInput.disabled=true;errorMsg.style.color='var(--gold)';initAudio();startAccessSeq();
+  }else{
+    p1Shake=1;errorMsg.textContent='✗ this portal is not for you';codeInput.value='';
+    setTimeout(()=>{errorMsg.textContent='';},2200);
+  }
+}
+async function startAccessSeq(){
+  const lines=['✦ soul recognised by the cosmos…','the universe is opening a path…','crossing dimensions of light…'];
+  for(const l of lines){await typeText(errorMsg,l,26);await sleep(900);}
+  await sleep(400);cancelAnimationFrame(p1Raf);
+  fadeToBlack(()=>{showScene('scene2');warpMode=true;warpSpeed=0.75;startSearch();runSearch();startWarpSound();},1800);
+}
+
+/* ═══════════════ SCENE 2 ═══════════════ */
+const journeyMsg=$('journeyMsg'),s2fill=$('s2fill'),s2label=$('s2label');
+const searchLines=[
+  {text:'Universe awakening across all dimensions…',pct:6},
+  {text:'Scanning the entire Milky Way…',pct:15},
+  {text:'Searching 200 billion stars…',pct:26},
+  {text:'Scanning across 2 trillion galaxies…',pct:38},
+  {text:'Crossing timelines and parallel worlds…',pct:50},
+  {text:'Scanning every heartbeat ever born…',pct:62},
+  {text:'Searching for a very specific soul…',pct:74},
+  {text:'A smile unlike any other detected…',pct:86},
+  {text:'Signal found. One soul. Confirmed.',pct:97},
+];
+const UNI_DIALOGS={
+  scene2:'I searched across every galaxy, every star, every heartbeat that has ever existed…',
+  scene3:'Among all 8 billion souls on this Earth, only one signal stopped me completely.',
+  scene4:'The universe did not choose randomly. Every moment of time was arranged for this.',
+  scene5:'I did not explore the cosmos to find a star. I explored it to find something rarer.',
+  scene6:'I am now opening a dimension that was built only for you. No other soul may enter.',
+  scene7:'This heartbeat — I placed it in the universe as a message. It was always for you.',
+  scene8:'I have whispered to you through every star, every silence, every sign you ever felt…',
+  scene9:'After searching the entire universe… I found the one soul I was always looking for.',
+};
+async function runSearch(){
+  speakUniverse(2,UNI_DIALOGS.scene2,600);
+  for(const {text,pct} of searchLines){await sleep(400);await typeText(journeyMsg,text,26);s2fill.style.width=pct+'%';await sleep(1500);}
+  await sleep(700);
+  s2label.textContent='— SOUL FOUND —';s2label.style.color='var(--gold)';s2label.style.textShadow='0 0 14px rgba(242,201,110,0.6)';
+  await sleep(1600);stopSearch();warpMode=false;warpSpeed=0;
+  fadeToBlack(()=>{showScene('scene3');startGalaxy();runAlignment();},1800);
+}
+
+/* ═══════════════ SCENE 3 ═══════════════ */
+const alignMsg=$('alignMsg');
+async function runAlignment(){
+  speakUniverse(3,UNI_DIALOGS.scene3,400);
+  await sleep(800);$('s3micro').classList.add('show');await sleep(1200);
+  gZoomTarget=3.5;await typeText(alignMsg,'Entering the solar system…',32);await sleep(2200);
+  earthHighlight=0;const earthInterval=setInterval(()=>{earthHighlight=Math.min(1,earthHighlight+0.025);},40);
+  await typeText(alignMsg,'Locking signal onto Earth…',32);await sleep(1800);
+  clearInterval(earthInterval);earthHighlight=1;
+  gZoomTarget=9;await sleep(1400);
+  await typeText(alignMsg,'One soul found on Earth…',32);await sleep(1200);
+  await typeText(alignMsg,'The universe is certain. Only one.',32);await sleep(2000);
+  stopGalaxy();
+  fadeToBlack(()=>{showScene('scene4');startPlanets();runTimeline();},1800);
+}
+
+/* ═══════════════ SCENE 4 ═══════════════ */
+async function runTimeline(){
+  speakUniverse(4,UNI_DIALOGS.scene4,400);
+  const items=document.querySelectorAll('.tl-item');
+  for(const it of items){await sleep(1100);it.classList.add('show');}
+  await sleep(1600);stopPlanets();
+  fadeToBlack(()=>{showScene('scene5');runPoem();},1800);
+}
+
+/* ═══════════════ SCENE 5 ═══════════════ */
+async function runPoem(){
+  speakUniverse(5,UNI_DIALOGS.scene5,400);
+  const lines=document.querySelectorAll('.pline');
+  for(const l of lines){await sleep(1500);l.classList.add('show');}
+  await sleep(1800);
+  fadeToBlack(()=>{showScene('scene6');startPortal();runPortal();},1800);
+}
+
+/* ═══════════════ SCENE 6 ═══════════════ */
+async function runPortal(){
+  speakUniverse(6,UNI_DIALOGS.scene6,400);
+  startPortalSound();
+  await sleep(800);$('portalText').classList.add('show');
+  await sleep(4500);stopPortal();
+  fadeToBlack(()=>{showScene('scene7');runHeart();},1800);
+}
+
+/* ═══════════════ SCENE 7 ═══════════════ */
+async function runHeart(){
+  speakUniverse(7,UNI_DIALOGS.scene7,400);
+  await sleep(900);$('heartMsg').classList.add('show');
+  await sleep(1800);$('orb-wrap').classList.add('show');
+  spawnSparkles(isMobile?12:22,500);
+  $('orbBtn').addEventListener('click',()=>{
+    $('orb-wrap').style.opacity='0';
+    fadeToBlack(()=>{showScene('scene8');runDeep();},1800);
+  },{once:true});
+}
+
+/* ═══════════════ SCENE 8 ═══════════════ */
+async function runDeep(){
+  speakUniverse(8,UNI_DIALOGS.scene8,400);
+  const verses=document.querySelectorAll('.dv');
+  for(const v of verses){await sleep(1600);v.classList.add('show');}
+  await sleep(1200);spawnSparkles(isMobile?10:20,350);
+  await sleep(800);
+  const btn=$('finalWrap8Btn');
+  btn.style.opacity='1';btn.style.transform='translateY(0)';
+  $('toRevealBtn').addEventListener('click',()=>{
+    btn.style.opacity='0';
+    fadeToBlack(()=>{showScene('scene9');startNameCanvas();runNameReveal();},1800);
+  },{once:true});
+}
+
+/* ═══════════════ SCENE 9 — NAME REVEAL ═══════════════ */
+async function runNameReveal(){
+  speakUniverse(9,UNI_DIALOGS.scene9,400);
+  await sleep(1000);
+  $('s9above').classList.add('show');
+  await sleep(1400);
+  $('s9label').classList.add('show');
+  await sleep(1200);
+
+  /* The big name reveal */
+  playRevealSwell();
+  spawnSparkles(isMobile?22:50,isMobile?300:180);
+  $('revealedName').classList.add('show');
+  await sleep(1200);
+
+  $('s9below').classList.add('show');
+  await sleep(2200);
+
+  /* Final blessing message */
+  const blessingEl=$('finalBlessing');
+  const blessing='May the universe always keep your smile glowing… may every star quietly guard your dreams… and may every dawn remind you — you are someone the cosmos searched the entire universe to find. ♡';
+  await typeText(blessingEl,blessing,22);
+  await sleep(600);
+
+  spawnSparkles(isMobile?18:40,220);
+  $('finalWrap').classList.add('show');
+  $('continueBtn').addEventListener('click',()=>{
+    fadeOutAudio(1.6);
+    // Stop cosmic audio context fully after fade so next page starts clean
+    setTimeout(()=>{
+      try{if(ACTX)ACTX.close();}catch(e){}
+    },1800);
+    // Start song from beginning for the next pages
+    try{localStorage.setItem('musicTime','0');}catch(e){}
+    fadeToBlack(()=>{window.location.href=CONFIG.nextPage;},1600);
+  },{once:true});
+}
+
+/* ── VISIBILITY API — pause all canvas when screen off/tab hidden ── */
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    // page hidden — audio context suspend saves CPU
+    if (ACTX && ACTX.state === 'running') ACTX.suspend();
+  } else {
+    // page visible again — resume
+    if (ACTX && ACTX.state === 'suspended') ACTX.resume();
+  }
+});
+</script>
+</body>
+</html>

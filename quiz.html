@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="ml">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>അഞ്ജു ❤️ Quiz</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #ffdde1, #ee9ca7);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow-x: hidden;
+    }
+
+    .quiz-box {
+      background: rgba(255,255,255,0.2);
+      backdrop-filter: blur(12px);
+      padding: 25px;
+      border-radius: 20px;
+      width: 90%;
+      max-width: min(400px, 94vw);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+      text-align: center;
+    }
+
+    h2 {
+      color: #fff;
+      margin-bottom: 15px;
+    }
+
+    p {
+      color: #fff;
+      font-size: 15px;
+      margin-bottom: 10px;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      border-radius: 10px;
+      border: none;
+      outline: none;
+      font-size: 16px;
+      margin-bottom: 15px;
+    }
+
+    button {
+      padding: 12px 30px;
+      border: none;
+      border-radius: 30px;
+      background: #ff4f81;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .msg {
+      margin-top: 10px;
+      color: #fff;
+      font-size: 14px;
+      min-height: 20px;
+    }
+      img { max-width: 100%; height: auto; }
+    input, button { -webkit-appearance: none; border-radius: 10px; }
+  </style>
+</head>
+<body>
+
+  <div class="quiz-box">
+    <h2 id="qno">ചോദ്യം 1 ❤️</h2>
+    <p id="question"></p>
+
+    <input type="text" id="answer" placeholder="നിന്റെ മറുപടി..." />
+    <button onclick="next()">Next</button>
+
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <script>
+    const quiz = [
+      {
+        q: "നമ്മൾ ആദ്യമായി വിളിച്ചത് ഏത് ദിവസം?",
+        a: ["september 26", "26 september", "സെപ്റ്റംബർ 26"],
+        strict: true
+      },
+      {
+        q: "ഞാൻ നിന്നോട് ആദ്യമായി പറഞ്ഞ കഥ ഏതാണ്?",
+        a: ["sarpagandhi", "സർപ്പഗന്ധി"],
+        strict: true
+      },
+      {
+        q: "നമ്മുടെ ബന്ധം തുടങ്ങുമ്പോൾ നീ ആദ്യമായി കരഞ്ഞ ദിവസം ഏത്?",
+        a: ["september 26", "26 september", "സെപ്റ്റംബർ 26"],
+        strict: true
+      },
+      {
+        q: "എന്നെ പറ്റി നീ ആലോചിക്കുമ്പോൾ നിനക്ക് എന്താണ് തോന്നുന്നത്?",
+        strict: false
+      },
+      {
+        q: "നമ്മൾ ആദ്യമായി കിസ് ചെയ്ത ദിവസം ഏത്?",
+        a: ["december 26", "26 december", "ഡിസംബർ 26"],
+        strict: true
+      },
+      {
+        q: "ഞാൻ നിന്നെ ഏറ്റവും കൂടുതലായി വിളിക്കുന്ന വാക്ക് ഏത്?",
+        a: ["മോളേ", "molee", "mole"],
+        strict: true
+      },
+      {
+        q: "നമ്മുടെ ബന്ധത്തിൽ നിന്നെ ഏറ്റവും safe ആയി തോന്നിക്കുന്ന കാര്യം എന്താണ്?",
+        strict: false
+      },
+      {
+        q: "എന്റെ ഏത് സ്വഭാവമാണ് നിന്നെ എനിക്ക് കൂടുതൽ അടുപ്പിക്കുന്നത്?",
+        strict: false
+      },
+      {
+        q: "നീ “ഇവനാണ് എന്റെ ആളെന്ന്” ഉറപ്പിച്ചത് എപ്പോൾ?",
+        strict: false
+      },
+      {
+        q: "ഈ വെബ്സൈറ്റ് ആര്ക്ക് വേണ്ടി മാത്രമാണ്? ❤️",
+        a: ["anju", "അഞ്ജു"],
+        strict: true
+      }
+    ];
+
+    let i = 0;
+
+    const questionEl = document.getElementById("question");
+    const answerEl = document.getElementById("answer");
+    const msgEl = document.getElementById("msg");
+    const qnoEl = document.getElementById("qno");
+
+    load();
+
+    // Mobile keyboard "Done"/"Go" key submits answer
+    document.getElementById("answer").addEventListener("keydown", function(e){
+      if (e.key === "Enter") { e.preventDefault(); next(); }
+    });
+
+    function load() {
+      qnoEl.innerText = `ചോദ്യം ${i + 1} ❤️`;
+      questionEl.innerText = quiz[i].q;
+      answerEl.value = "";
+      msgEl.innerText = "";
+    }
+
+    function normalize(text) {
+      return text.toLowerCase().trim();
+    }
+
+    function next() {
+      const user = normalize(answerEl.value);
+
+      if (quiz[i].strict) {
+        const answers = quiz[i].a.map(a => normalize(a));
+        if (!user || !answers.includes(user)) {
+          msgEl.innerText = "ഒന്നു കൂടി ഓർക്കൂ മോളേ ❤️";
+          return;
+        }
+      }
+
+      i++;
+
+      if (i < quiz.length) {
+        load();
+      } else {
+        window.location.href = "memory.html";
+      }
+    }
+  </script>
+<script>
+(function(){
+  /* ── Music engine: seamless across all pages ── */
+  if (!window.bgMusic) {
+    window.bgMusic = new Audio("assets/music/anju-song.mp3");
+    window.bgMusic.loop = true;
+    window.bgMusic.volume = 0.6;
+    window.bgMusic.preload = "auto";
+  }
+  // Save position continuously
+  window.bgMusic.ontimeupdate = function() {
+    try { localStorage.setItem("musicTime", window.bgMusic.currentTime); } catch(e){}
+  };
+  // Restore position + try autoplay
+  var _t = null;
+  try { _t = localStorage.getItem("musicTime"); } catch(e){}
+  if (_t) window.bgMusic.currentTime = parseFloat(_t);
+  window.bgMusic.play().catch(function(){});
+
+  // iOS Safari fix: play on very first touch anywhere on page
+  function _tryPlay(){ window.bgMusic.play().catch(function(){}); }
+  document.addEventListener("touchstart", _tryPlay, {once:true, passive:true});
+  document.addEventListener("click",      _tryPlay, {once:true, passive:true});
+
+  // Save before leaving
+  window.addEventListener("pagehide", function(){
+    try { localStorage.setItem("musicTime", window.bgMusic.currentTime); } catch(e){}
+  });
+  window.addEventListener("beforeunload", function(){
+    try { localStorage.setItem("musicTime", window.bgMusic.currentTime); } catch(e){}
+  });
+  // Pause/resume on visibility change (battery + lag fix)
+  document.addEventListener("visibilitychange", function(){
+    if (document.hidden) window.bgMusic.pause();
+    else window.bgMusic.play().catch(function(){});
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ml">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>അഞ്ജു ❤️</title>
+
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      background: linear-gradient(135deg, #f7b2d9, #d66aa6);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Segoe UI', sans-serif;
+      overflow: hidden;
+    }
+
+    .card {
+      width: min(320px, 92vw);
+      background: rgba(255, 255, 255, 0.25);
+      backdrop-filter: blur(12px);
+      border-radius: 25px;
+      padding: 25px;
+      text-align: center;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.35);
+      animation: fadeIn 1.2s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .photo {
+      width: min(170px, 42vw);
+      height: min(170px, 42vw);
+      border-radius: 50%;
+      overflow: hidden;
+      margin: 0 auto 15px;
+      box-shadow: 0 15px 30px rgba(0,0,0,0.4);
+    }
+
+    .photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    h1 {
+      color: #fff;
+      margin: 10px 0 5px;
+      font-size: 28px;
+    }
+
+    p {
+      color: #fff;
+      font-size: 15px;
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+
+    button {
+      padding: 12px 35px;
+      border: none;
+      border-radius: 30px;
+      background: #ff4f81;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+    }
+
+    /* floating hearts */
+    .heart {
+      position: absolute;
+      color: rgba(255,255,255,0.7);
+      font-size: 18px;
+      animation: float 6s infinite ease-in;
+    }
+
+    @keyframes float {
+      0% { transform: translateY(100vh); opacity: 0; }
+      50% { opacity: 1; }
+      100% { transform: translateY(-10vh); opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+
+  <span class="heart" style="left:15%">❤️</span>
+  <span class="heart" style="left:45%; animation-delay:2s">❤️</span>
+  <span class="heart" style="left:70%; animation-delay:4s">❤️</span>
+
+  <div class="card">
+    <div class="photo">
+      <img src="assets/images/anju.jpg" alt="Anju">
+    </div>
+
+    <h1>അഞ്ജു ❤️</h1>
+    <p>
+      ഒരു ചെറിയ പരീക്ഷ…<br>
+      എന്നെ എത്രത്തോളം അറിയാം എന്ന് നോക്കാം 😊
+    </p>
+
+    <button onclick="start()">തുടങ്ങാം</button>
+  </div>
+
+  <script>
+  (function(){
+    /* ── Music engine: start fresh on main.html ── */
+    if (!window.bgMusic) {
+      window.bgMusic = new Audio("assets/music/anju-song.mp3");
+      window.bgMusic.loop = true;
+      window.bgMusic.volume = 0.6;
+      window.bgMusic.preload = "auto";
+    }
+    window.bgMusic.ontimeupdate = function() {
+      try { localStorage.setItem("musicTime", window.bgMusic.currentTime); } catch(e){}
+    };
+    // Resume from where the song left off
+    var _t = null;
+    try { _t = localStorage.getItem("musicTime"); } catch(e){}
+    if (_t) window.bgMusic.currentTime = parseFloat(_t);
+    // iOS fix: play on first touch
+    function _tryPlay(){ window.bgMusic.play().catch(function(){}); }
+    document.addEventListener("touchstart", _tryPlay, {once:true, passive:true});
+    window.addEventListener("pagehide", function(){
+      try { localStorage.setItem("musicTime", window.bgMusic.currentTime); } catch(e){}
+    });
+    window.addEventListener("beforeunload", function(){
+      try { localStorage.setItem("musicTime", window.bgMusic.currentTime); } catch(e){}
+    });
+    document.addEventListener("visibilitychange", function(){
+      if (document.hidden) window.bgMusic.pause();
+      else window.bgMusic.play().catch(function(){});
+    });
+  })();
+
+  function start() {
+    window.bgMusic.play().catch(function(){});
+    window.location.href = "quiz.html";
+  }
+  </script>
+
+</body>
+</html>

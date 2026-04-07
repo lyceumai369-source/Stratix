@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="ml">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#04000f">
+<title>Our Garden 🌸</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --pink:#ff6eb5;--rose:#ff4f95;--violet:#c471ed;--gold:#ffd700;
+  --cyan:#80f4ff;--green:#34d399;--orange:#f97316;
+  --sky1:#04000f;--sky2:#120535;--sky3:#1a0545;
+}
+html,body{width:100%;height:100%;overflow:hidden;background:#04000f;
+  font-family:'Cormorant Garamond',serif;touch-action:manipulation;
+  -webkit-font-smoothing:antialiased;
+  height: 100dvh; /* dynamic viewport for mobile browsers */
+}
+
+/* ── CANVAS STACK ── */
+#cvsBg,#cvsGarden{position:fixed;inset:0;width:100%;height:100%;}
+#cvsBg{z-index:0;}
+#cvsGarden{z-index:2;pointer-events:none;}
+
+/* ── FLOWER STAGE ── */
+#stage{
+  position:fixed;bottom:0;left:0;right:0;
+  height:72%;z-index:3;
+  display:flex;align-items:flex-end;justify-content:space-around;
+  padding:0 2vw env(safe-area-inset-bottom, 0px);
+}
+.fw{
+  position:relative;flex:1;
+  max-width:clamp(48px,13vw,80px);
+  display:flex;flex-direction:column;align-items:center;
+  cursor:pointer;-webkit-tap-highlight-color:transparent;
+  transform:translateY(0);transition:transform .15s ease;
+}
+.fw:active{transform:translateY(-3px);}
+
+/* SVG flower */
+.fsvg{
+  width:clamp(46px,12vw,76px);
+  height:clamp(46px,12vw,76px);
+  transform:scale(0) rotate(-120deg);
+  transform-origin:center bottom;
+  transition:transform 1.1s cubic-bezier(0.34,1.56,0.64,1);
+  filter:drop-shadow(0 0 8px var(--gc));
+  position:relative;z-index:2;
+  will-change:transform;
+}
+.fsvg.open{transform:scale(1) rotate(0deg);}
+.fsvg.open:hover{filter:drop-shadow(0 0 18px var(--gc)) brightness(1.15);}
+
+/* stem */
+.fstem{
+  width:3px;
+  background:linear-gradient(180deg,#4ade80,#166534);
+  border-radius:2px;
+  transform:scaleY(0);transform-origin:bottom;
+  transition:transform 1s cubic-bezier(0.34,1.56,0.64,1);
+  position:relative;z-index:1;
+  will-change:transform;
+}
+.fstem.up{transform:scaleY(1);}
+
+/* leaf pair */
+.fleaf{
+  position:absolute;
+  width:clamp(10px,3vw,16px);height:clamp(7px,2vw,11px);
+  border-radius:0 100% 0 100%;
+  background:linear-gradient(135deg,#4ade80,#166534);
+  opacity:0;transition:opacity .5s .8s;
+}
+.fleaf.l{left:-130%;top:35%;transform:rotate(-30deg);}
+.fleaf.r{right:-130%;top:50%;transform:rotate(30deg) scaleX(-1);}
+.fstem.up .fleaf{opacity:1;}
+
+/* word label */
+.flabel{
+  font-family:'Cinzel',serif;
+  font-size:clamp(8px,2.2vw,12px);
+  letter-spacing:.06em;
+  color:#fff;text-align:center;
+  margin-top:5px;padding-bottom:2px;
+  opacity:0;transform:translateY(8px);
+  transition:opacity .7s 1.1s,transform .7s 1.1s;
+  text-shadow:0 0 12px var(--gc);
+  pointer-events:none;white-space:nowrap;
+  will-change:opacity,transform;
+}
+.fw.bloomed .flabel{opacity:1;transform:translateY(0);}
+.fw.bloomed .fsvg{animation:fFloat 3.5s ease-in-out infinite;}
+@keyframes fFloat{0%,100%{transform:scale(1) translateY(0);}50%{transform:scale(1) translateY(-6px);}}
+
+/* ── TAP HINT ── */
+#hint{
+  position:fixed;bottom:calc(28% + max(env(safe-area-inset-bottom, 0px), 12px));left:50%;transform:translateX(-50%);
+  z-index:10;font-family:'Cinzel',serif;
+  font-size:clamp(11px,3vw,14px);letter-spacing:.12em;
+  color:rgba(255,200,180,.75);white-space:nowrap;
+  animation:hpulse 2s infinite;pointer-events:none;
+  text-shadow:0 0 20px rgba(255,150,180,.5);
+}
+@keyframes hpulse{0%,100%{opacity:.3;}50%{opacity:1;}}
+
+/* ── INTRO ── */
+#intro{
+  position:fixed;inset:0;z-index:60;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;
+  padding:max(env(safe-area-inset-top,20px),30px) 28px max(env(safe-area-inset-bottom,20px),30px);
+  background:linear-gradient(160deg,#04000f,#14053a,#04000f);
+  animation:iIn 1.4s ease;
+}
+@keyframes iIn{from{opacity:0;}to{opacity:1;}}
+.i-moon{font-size:clamp(48px,14vw,68px);margin-bottom:6px;animation:iRock 4s ease-in-out infinite;}
+@keyframes iRock{0%,100%{transform:rotate(-6deg);}50%{transform:rotate(6deg);}}
+.i-title{
+  font-family:'Cinzel',serif;font-weight:700;
+  font-size:clamp(20px,5.5vw,28px);letter-spacing:.18em;
+  color:#fff;margin-bottom:10px;
+  text-shadow:0 0 30px rgba(200,120,255,.7),0 0 60px rgba(200,120,255,.3);
+}
+.i-sub{
+  font-size:clamp(13px,3.8vw,16px);font-style:italic;
+  color:rgba(255,195,210,.8);line-height:1.85;margin-bottom:28px;
+  max-width:320px;
+}
+.i-btn{
+  padding:15px 46px;border:none;border-radius:50px;
+  background:linear-gradient(135deg,#ff4f95,#c471ed);
+  color:#fff;font-family:'Cinzel',serif;
+  font-size:15px;font-weight:700;letter-spacing:.14em;cursor:pointer;
+  box-shadow:0 0 30px rgba(255,80,150,.5),0 15px 40px rgba(0,0,0,.4);
+  -webkit-tap-highlight-color:transparent;
+  animation:btnPulse 2.5s ease-in-out infinite;
+}
+@keyframes btnPulse{0%,100%{box-shadow:0 0 30px rgba(255,80,150,.4),0 15px 40px rgba(0,0,0,.4);}50%{box-shadow:0 0 50px rgba(255,80,150,.7),0 15px 50px rgba(0,0,0,.5);}}
+
+/* ── FINAL OVERLAY ── */
+#finalOv{
+  position:fixed;inset:0;z-index:50;
+  display:none;flex-direction:column;
+  align-items:center;justify-content:center;
+  padding:max(env(safe-area-inset-top,16px),20px) 20px max(env(safe-area-inset-bottom,16px),20px);
+  background:rgba(0,0,0,0);
+  overflow-y:auto;
+  transition:background 1.6s ease;
+}
+#finalOv.show{background:rgba(4,0,12,.82);}
+#finalCard{
+  background:rgba(255,255,255,.055);
+  backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);
+  border-radius:28px;
+  border:1px solid rgba(255,130,190,.25);
+  padding:clamp(24px,6vw,42px) clamp(22px,6vw,38px);
+  max-width:min(400px,93vw);text-align:center;
+  box-shadow:0 30px 80px rgba(0,0,0,.6),0 0 80px rgba(255,80,150,.18);
+  transform:scale(0) translateY(30px);
+  transition:transform .9s cubic-bezier(0.34,1.56,0.64,1);
+}
+#finalCard.show{transform:scale(1) translateY(0);}
+.fc-glyph{font-size:clamp(42px,12vw,58px);margin-bottom:12px;display:block;}
+.fc-title{
+  font-family:'Cinzel',serif;font-weight:700;
+  font-size:clamp(16px,4.5vw,21px);letter-spacing:.1em;line-height:1.55;
+  background:linear-gradient(135deg,#ffd700,#ff9ad5,#c471ed);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  margin-bottom:14px;
+}
+.fc-msg{
+  font-size:clamp(13px,3.8vw,15px);font-style:italic;
+  line-height:2;color:rgba(255,255,255,.85);margin-bottom:18px;
+}
+.fc-sign{
+  font-family:'Cinzel',serif;font-size:clamp(11px,3vw,13px);
+  color:#ff9ad5;letter-spacing:.1em;margin-bottom:24px;display:block;
+}
+.fc-btn{
+  position:relative;z-index:10;
+  padding:14px 42px;border:none;border-radius:50px;
+  background:linear-gradient(135deg,#ff4f95,#c471ed);
+  color:#fff;font-family:'Cinzel',serif;
+  font-size:15px;font-weight:700;letter-spacing:.12em;cursor:pointer;
+  box-shadow:0 12px 35px rgba(255,80,150,.45);
+  -webkit-tap-highlight-color:transparent;
+}
+
+/* ── FALLING PETALS ── */
+.fpetal{
+  position:fixed;pointer-events:none;z-index:45;
+  animation:pfall linear forwards;
+}
+@keyframes pfall{
+  0%{transform:translateY(-30px) rotate(0deg) scale(.8);opacity:0;}
+  8%{opacity:1;}
+  92%{opacity:.7;}
+  100%{transform:translateY(110vh) rotate(var(--pr)) scale(1.1);opacity:0;}
+}
+
+/* ── BURST PARTICLES ── */
+.burst{
+  position:fixed;pointer-events:none;z-index:30;
+  will-change:transform,opacity;
+}
+</style>
+</head>
+<body>
+
+<canvas id="cvsBg"></canvas>
+<canvas id="cvsGarden"></canvas>
+<div id="stage"></div>
+<div id="hint">🌱 tap each flower to bloom…</div>
+
+<!-- INTRO -->
+<div id="intro">
+  <div class="i-moon">🌙</div>
+  <div class="i-title">Our Secret Garden</div>
+  <div class="i-sub">
+    In my heart, a garden blooms<br>
+    every time I think of you…<br>
+    <em>Tap each flower to awaken it 🌸</em>
+  </div>
+  <button class="i-btn" onclick="startGarden()">Enter the Garden ✨</button>
+</div>
+
+<!-- FINAL -->
+<div id="finalOv">
+  <div id="finalCard">
+    <span class="fc-glyph">🌺</span>
+    <div class="fc-title">Every flower in this garden<br>is a feeling I have for you.</div>
+    <div class="fc-msg">
+      Just like flowers need sunlight,<br>
+      I need you to feel alive.<br>
+      You are the garden,<br>
+      the rain, and the light.<br>
+      You are everything that makes<br>
+      this heart of mine bloom. 🌸
+    </div>
+    <span class="fc-sign">— Always yours, forever ❤️</span>
+    <button class="fc-btn" onclick="location.href='last.html'">അടുത്തത് 🎂</button>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════
+   GARDEN — maximum beauty, zero lag
+   Architecture:
+   - cvsBg  : sky gradient, aurora, stars, moon (all canvas, GPU only)
+   - cvsGarden: fireflies, ground glow (canvas)
+   - #stage : SVG flowers, CSS animations only
+═══════════════════════════════════════════════════ */
+
+const isMobile = window.innerWidth < 600;
+
+/* ── FLOWER DATA ── */
+const FLOWERS = [
+  {word:'അഞ്ജു',    emoji:'💛', colors:['#ff9ad5','#ff6bb5','#ff4f95','#ffb3d9','#ffd6ec'], glow:'#ff6bb5', stemH:.22},
+  {word:'സ്നേഹം',   emoji:'❤️', colors:['#ff6060','#ff3838','#ff4f4f','#ff7878','#ffa0a0'], glow:'#ff4040', stemH:.28},
+  {word:'മോളേ',     emoji:'🌸', colors:['#c471ed','#a855f7','#9333ea','#b860e0','#d490f8'], glow:'#a855f7', stemH:.19},
+  {word:'ചിരി',     emoji:'☀️', colors:['#ffd700','#ffcc00','#ffe030','#ffdd40','#fff060'], glow:'#ffd700', stemH:.30},
+  {word:'വിശ്വാസം', emoji:'💙', colors:['#60a5fa','#3b82f6','#2563eb','#80baff','#a0d0ff'], glow:'#3b82f6', stemH:.25},
+  {word:'എന്നും',   emoji:'💚', colors:['#34d399','#10b981','#059669','#50e0a8','#70efc0'], glow:'#10b981', stemH:.21},
+  {word:'നിന്നോട്', emoji:'💕', colors:['#fb923c','#f97316','#ea580c','#fca060','#ffba80'], glow:'#f97316', stemH:.26},
+];
+
+/* ── BG CANVAS ── */
+const bgC = document.getElementById('cvsBg');
+const bgX = bgC.getContext('2d');
+const gdC = document.getElementById('cvsGarden');
+const gdX = gdC.getContext('2d');
+let W, H;
+
+function resize(){
+  W = bgC.width = gdC.width = window.innerWidth;
+  H = bgC.height = gdC.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize, {passive:true});
+
+/* ── STARS ── */
+const STAR_N = isMobile ? 100 : 180;
+const stars = Array.from({length:STAR_N}, () => ({
+  x: Math.random(), y: Math.random() * .75,
+  r: Math.random() * 1.5 + .3,
+  a: Math.random() * .7 + .15,
+  tw: Math.random() * Math.PI * 2,
+  spd: .8 + Math.random() * 1.4,
+}));
+
+/* ── MOON ── */
+const moon = {x:.82, y:.08, r:isMobile?28:38, phase:0};
+
+/* ── FIREFLIES ── */
+const FF_N = isMobile ? 12 : 20;
+const fflies = Array.from({length:FF_N}, () => ({
+  x: .1 + Math.random() * .8,
+  y: .15 + Math.random() * .55,
+  ox: 0, oy: 0,
+  phase: Math.random() * Math.PI * 2,
+  spd: .4 + Math.random() * .8,
+  rx: 30 + Math.random() * 60,
+  ry: 20 + Math.random() * 40,
+  a: 0, maxA: .6 + Math.random() * .4,
+  blinkSpd: 1.2 + Math.random() * 2,
+  active: false,
+}));
+
+/* ── SKY STATE ── */
+let skyPhase = 0; // 0=night, 1=twilight, 2=dawn
+let tick = 0;
+let gardenStarted = false;
+let bloomCount = 0;
+
+/* sky color sets */
+const SKY = [
+  // night
+  [[4,0,15],[18,5,52],[26,8,68],[10,4,20]],
+  // twilight
+  [[20,3,48],[70,15,95],[190,60,110],[240,140,80]],
+  // dawn
+  [[38,6,70],[110,30,140],[210,85,140],[255,190,120]],
+];
+
+function lerpSky(phase){
+  const i0 = Math.floor(phase), i1 = Math.min(i0+1,2), t = phase - i0;
+  return SKY[i0].map((c,ci)=> c.map((v,vi)=>
+    Math.round(v + (SKY[i1][ci][vi]-v)*t)
+  ));
+}
+
+/* ── AURORA (only when bloom started) ── */
+let auroraT = 0;
+function drawAurora(cols){
+  if(!gardenStarted) return;
+  const strength = Math.min(1, bloomCount / 4) * .38;
+  if(strength < .01) return;
+  auroraT += .004;
+  const bands = [
+    {hue:280, y:.18},
+    {hue:200, y:.28},
+    {hue:320, y:.12},
+  ];
+  for(const b of bands){
+    const y = b.y * H;
+    const grad = bgX.createLinearGradient(0,y-80,0,y+80);
+    const wave = Math.sin(auroraT + b.hue*.01) * .15;
+    grad.addColorStop(0,'transparent');
+    grad.addColorStop(.3+wave,`hsla(${b.hue},90%,65%,${strength*.4})`);
+    grad.addColorStop(.5,`hsla(${b.hue},90%,65%,${strength*.7})`);
+    grad.addColorStop(.7-wave,`hsla(${b.hue},90%,65%,${strength*.3})`);
+    grad.addColorStop(1,'transparent');
+    bgX.save();
+    bgX.globalCompositeOperation='screen';
+    for(let x=0;x<W;x+=W*.25){
+      const wx = Math.sin(auroraT*.7 + x*.003 + b.hue*.01)*H*.04;
+      bgX.fillStyle=grad;
+      bgX.fillRect(x, y+wx-80, W*.3, 160);
+    }
+    bgX.restore();
+  }
+}
+
+/* ── GROUND GLOW ── */
+function drawGround(){
+  const gh = H * .22;
+  // base ground
+  const grad = gdX.createLinearGradient(0, H-gh, 0, H);
+  const gc0 = gardenStarted ?
+    `rgba(${20+bloomCount*8},${12+bloomCount*4},${5},1)` : 'rgba(12,8,2,1)';
+  grad.addColorStop(0, 'rgba(0,0,0,0)');
+  grad.addColorStop(.08, gc0);
+  grad.addColorStop(1, 'rgba(8,5,1,1)');
+  gdX.fillStyle = grad;
+  gdX.beginPath();
+  gdX.ellipse(W*.5, H, W*.65, gh*.7, 0, Math.PI, 0);
+  gdX.fill();
+
+  // soil glow — intensifies as flowers bloom
+  if(gardenStarted && bloomCount > 0){
+    const glowColors = ['#ff6bb5','#ff4040','#a855f7','#ffd700','#3b82f6','#10b981','#f97316'];
+    const usedColors = glowColors.slice(0, bloomCount);
+    usedColors.forEach((col, i) => {
+      const xp = (.1 + i * .13) * W;
+      const sg = gdX.createRadialGradient(xp, H*.85, 0, xp, H*.85, W*.12);
+      const hex = col.replace('#','');
+      const r16 = parseInt(hex.substring(0,2),16);
+      const g16 = parseInt(hex.substring(2,4),16);
+      const b16 = parseInt(hex.substring(4,6),16);
+      sg.addColorStop(0, `rgba(${r16},${g16},${b16},0.22)`);
+      sg.addColorStop(1,'transparent');
+      gdX.fillStyle = sg;
+      gdX.fillRect(0, H*.7, W, H*.3);
+    });
+  }
+
+  // grass blades on canvas — efficient batch
+  gdX.save();
+  const grassCount = isMobile ? 80 : 140;
+  for(let i=0;i<grassCount;i++){
+    const gx = (i/grassCount)*W + Math.sin(i*1.7)*8;
+    const gh2 = 8 + Math.sin(i*2.3+tick*.03)*12 + 5;
+    const sway = Math.sin(tick*.025 + i*.4) * 3;
+    gdX.strokeStyle = i%3===0 ?
+      `rgba(74,222,128,${.4+Math.sin(i)*.2})` :
+      `rgba(22,101,52,${.5+Math.sin(i*1.3)*.2})`;
+    gdX.lineWidth = 1.5 + Math.random()*.5;
+    gdX.beginPath();
+    gdX.moveTo(gx, H);
+    gdX.quadraticCurveTo(gx + sway, H - gh2*.5, gx + sway*1.5, H - gh2);
+    gdX.stroke();
+  }
+  gdX.restore();
+}
+
+/* ── DRAW LOOP ── */
+let raf;
+function frame(){
+  tick++;
+  bgX.clearRect(0,0,W,H);
+  gdX.clearRect(0,0,W,H);
+
+  /* sky gradient */
+  const phase = Math.min(2, skyPhase);
+  const cols = lerpSky(phase);
+  const skyG = bgX.createLinearGradient(0,0,0,H);
+  skyG.addColorStop(0,   `rgb(${cols[0]})`);
+  skyG.addColorStop(.38, `rgb(${cols[1]})`);
+  skyG.addColorStop(.7,  `rgb(${cols[2]})`);
+  skyG.addColorStop(1,   `rgb(${cols[3]})`);
+  bgX.fillStyle = skyG;
+  bgX.fillRect(0,0,W,H);
+
+  /* aurora */
+  drawAurora(cols);
+
+  /* moon */
+  const mx = moon.x*W, my = moon.y*H, mr = moon.r;
+  const moonG = bgX.createRadialGradient(mx-mr*.3,my-mr*.3,0,mx,my,mr);
+  moonG.addColorStop(0,'#fffde8');
+  moonG.addColorStop(.6,'#f5e080');
+  moonG.addColorStop(1,'#d4b840');
+  // moon halo
+  const halo = bgX.createRadialGradient(mx,my,mr*.5,mx,my,mr*3.5);
+  halo.addColorStop(0,`rgba(255,230,100,${.25-skyPhase*.08})`);
+  halo.addColorStop(1,'transparent');
+  bgX.fillStyle=halo;bgX.beginPath();bgX.arc(mx,my,mr*3.5,0,Math.PI*2);bgX.fill();
+  bgX.fillStyle=moonG;bgX.beginPath();bgX.arc(mx,my,mr,0,Math.PI*2);bgX.fill();
+  // moon craters
+  bgX.fillStyle='rgba(180,150,40,.25)';
+  [[-.25,-.2,.28],[.15,.15,.18],[-.1,.3,.14]].forEach(([dx,dy,cr])=>{
+    bgX.beginPath();bgX.arc(mx+dx*mr,my+dy*mr,cr*mr,0,Math.PI*2);bgX.fill();
+  });
+
+  /* stars — fade with dawn */
+  const starAlpha = Math.max(0, 1 - skyPhase*.55);
+  for(const s of stars){
+    const tw = .6 + .4*Math.sin(tick*.02*s.spd + s.tw);
+    bgX.beginPath();bgX.arc(s.x*W, s.y*H, s.r, 0, Math.PI*2);
+    bgX.fillStyle=`rgba(255,255,255,${s.a*tw*starAlpha})`;bgX.fill();
+  }
+
+  /* ground + grass */
+  drawGround();
+
+  /* fireflies */
+  if(gardenStarted){
+    for(const ff of fflies){
+      ff.phase += ff.spd * .012;
+      const blink = .5 + .5*Math.sin(ff.phase * ff.blinkSpd);
+      if(!ff.active && blink > .9) ff.a = Math.min(ff.maxA, ff.a + .04);
+      else if(!ff.active) ff.a = Math.max(0, ff.a - .02);
+      if(ff.active) ff.a = Math.min(ff.maxA, ff.a + .06);
+      const fx = (ff.x + Math.sin(ff.phase)*ff.rx/W) * W;
+      const fy = (ff.y + Math.cos(ff.phase*.7)*ff.ry/H) * H;
+      // glow
+      const fg = gdX.createRadialGradient(fx,fy,0,fx,fy,isMobile?9:13);
+      fg.addColorStop(0,`rgba(170,255,140,${ff.a})`);
+      fg.addColorStop(.4,`rgba(140,255,100,${ff.a*.5})`);
+      fg.addColorStop(1,'transparent');
+      gdX.fillStyle=fg;gdX.beginPath();gdX.arc(fx,fy,isMobile?9:13,0,Math.PI*2);gdX.fill();
+      // core dot
+      gdX.fillStyle=`rgba(220,255,180,${ff.a})`;
+      gdX.beginPath();gdX.arc(fx,fy,isMobile?1.5:2.2,0,Math.PI*2);gdX.fill();
+    }
+  }
+
+  raf = requestAnimationFrame(frame);
+}
+frame();
+
+/* ── BUILD SVG FLOWERS ── */
+const stage = document.getElementById('stage');
+const wrapEls = [];
+
+function makePetalPath(i, n){
+  const angle = (i/n)*360;
+  return `<ellipse
+    cx="50" cy="22" rx="12" ry="22"
+    transform="rotate(${angle} 50 50)"
+    fill="url(#pg${i})" opacity=".92"/>`;
+}
+
+FLOWERS.forEach((fd, idx) => {
+  const stemPx = Math.round(fd.stemH * window.innerHeight);
+
+  const wrap = document.createElement('div');
+  wrap.className = 'fw';
+  wrap.style.setProperty('--gc', fd.glow);
+
+  // SVG flower
+  const n = 8;
+  const defs = fd.colors.map((c,i)=>`
+    <radialGradient id="pg${i}_f${idx}" cx="50%" cy="80%" r="60%">
+      <stop offset="0%" stop-color="${c}"/>
+      <stop offset="100%" stop-color="${c}88"/>
+    </radialGradient>`).join('');
+
+  const petals = Array.from({length:n}, (_,i)=>`
+    <ellipse cx="50" cy="20" rx="10" ry="22"
+      transform="rotate(${(i/n)*360} 50 50)"
+      fill="url(#pg${i%fd.colors.length}_f${idx})" opacity=".93">
+      <animate attributeName="opacity"
+        values=".93;1;.93" dur="${2+i*.15}s"
+        repeatCount="indefinite"/>
+    </ellipse>`).join('');
+
+  const svg = `<svg class="fsvg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="--gc:${fd.glow}">
+    <defs>${defs}</defs>
+    ${petals}
+    <circle cx="50" cy="50" r="13" fill="url(#ctr${idx})"/>
+    <radialGradient id="ctr${idx}" cx="40%" cy="35%" r="60%">
+      <stop offset="0%" stop-color="#fffde0"/>
+      <stop offset="70%" stop-color="#f0c030"/>
+      <stop offset="100%" stop-color="#c08010"/>
+    </radialGradient>
+    <text x="50" y="55" text-anchor="middle" font-size="13"
+      dominant-baseline="central">${fd.emoji}</text>
+  </svg>`;
+
+  const stem = document.createElement('div');
+  stem.className = 'fstem';
+  stem.style.height = stemPx + 'px';
+  const ll = document.createElement('div'); ll.className='fleaf l';
+  const lr = document.createElement('div'); lr.className='fleaf r';
+  stem.appendChild(ll); stem.appendChild(lr);
+
+  const label = document.createElement('div');
+  label.className = 'flabel';
+  label.style.setProperty('--gc', fd.glow);
+  label.textContent = fd.word;
+
+  wrap.innerHTML = svg;
+  wrap.appendChild(stem);
+  wrap.appendChild(label);
+
+  const svgEl = wrap.querySelector('.fsvg');
+  svgEl.style.setProperty('--gc', fd.glow);
+
+  // tap to bloom
+  let bloomed = false;
+  function bloom(){
+    if(bloomed) return;
+    bloomed = true;
+    wrap.classList.add('bloomed');
+    svgEl.classList.add('open');
+    stem.classList.add('up');
+
+    bloomCount++;
+    skyPhase = Math.min(2, bloomCount / 3.5);
+
+    burst(wrap, fd);
+
+    const remaining = FLOWERS.length - bloomCount;
+    const hint = document.getElementById('hint');
+    if(remaining > 0){
+      hint.textContent = `✨ ${remaining} more waiting…`;
+    } else {
+      hint.textContent = '';
+      setTimeout(showFinal, 1400);
+    }
+  }
+
+  wrap.addEventListener('touchend', e => { e.preventDefault(); bloom(); }, {passive:false});
+  wrap.addEventListener('click', bloom);
+
+  stage.appendChild(wrap);
+  wrapEls.push({wrap, svgEl, stem, bloom});
+});
+
+/* ── BURST PARTICLES ── */
+function burst(wrap, fd){
+  const rect = wrap.getBoundingClientRect();
+  const cx = rect.left + rect.width/2;
+  const cy = rect.top + rect.height * .3;
+  const items = ['🌸','✨','💫','🌺','⭐','🌼','💖','🌟'];
+  const n = isMobile ? 8 : 14;
+
+  for(let i=0; i<n; i++){
+    const el = document.createElement('div');
+    el.className = 'burst';
+    const dx = (Math.random()-.5)*180;
+    const dy = -(50 + Math.random()*140);
+    const rot = (Math.random()-.5)*360;
+    const sz = 12 + Math.random()*14;
+    el.textContent = items[Math.floor(Math.random()*items.length)];
+    el.style.cssText = `left:${cx}px;top:${cy}px;font-size:${sz}px;`;
+    el.animate([
+      {transform:'translate(0,0) scale(0) rotate(0deg)',opacity:1},
+      {transform:`translate(${dx*.3}px,${dy*.3}px) scale(1.2) rotate(${rot*.4}deg)`,opacity:1,offset:.35},
+      {transform:`translate(${dx}px,${dy}px) scale(.8) rotate(${rot}deg)`,opacity:0}
+    ], {duration:1100+i*40, easing:'cubic-bezier(0.22,1,0.36,1)', fill:'forwards'})
+    .onfinish = () => el.remove();
+    document.body.appendChild(el);
+  }
+
+  // colored dot sparks
+  const sparkN = isMobile ? 6 : 10;
+  for(let i=0; i<sparkN; i++){
+    const el = document.createElement('div');
+    const ang = (i/sparkN)*Math.PI*2;
+    const dist = 40 + Math.random()*60;
+    el.style.cssText = `
+      position:fixed;pointer-events:none;z-index:31;
+      left:${cx}px;top:${cy}px;
+      width:5px;height:5px;border-radius:50%;
+      background:${fd.colors[i % fd.colors.length]};
+      box-shadow:0 0 8px ${fd.glow};
+    `;
+    el.animate([
+      {transform:'translate(0,0) scale(1)',opacity:1},
+      {transform:`translate(${Math.cos(ang)*dist}px,${Math.sin(ang)*dist-30}px) scale(0)`,opacity:0}
+    ], {duration:700+i*50, easing:'ease-out', fill:'forwards'})
+    .onfinish = () => el.remove();
+    document.body.appendChild(el);
+  }
+}
+
+/* ── START GARDEN ── */
+function startGarden(){
+  const intro = document.getElementById('intro');
+  intro.style.transition = 'opacity .9s ease';
+  intro.style.opacity = '0';
+  setTimeout(() => { intro.style.display = 'none'; }, 900);
+  gardenStarted = true;
+  // activate all fireflies gradually
+  fflies.forEach((ff, i) => setTimeout(() => ff.active = true, i * 200));
+}
+
+/* ── FINAL ── */
+function showFinal(){
+  // falling petals shower
+  const pe = ['🌸','🌺','🌼','💮','🌷','✿','🌻'];
+  let cnt = 0;
+  const iv = setInterval(() => {
+    if(cnt > 50){ clearInterval(iv); return; }
+    const p = document.createElement('div');
+    p.className = 'fpetal';
+    p.textContent = pe[cnt % pe.length];
+    const dur = 3 + Math.random()*3;
+    p.style.cssText = `left:${Math.random()*100}vw;font-size:${14+Math.random()*14}px;
+      animation-duration:${dur}s;animation-delay:${Math.random()*.5}s;
+      --pr:${(Math.random()-.5)*720}deg;`;
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), (dur+1)*1000);
+    cnt++;
+  }, 100);
+
+  const ov = document.getElementById('finalOv');
+  const card = document.getElementById('finalCard');
+  ov.style.display = 'flex';
+  requestAnimationFrame(() => {
+    ov.classList.add('show');
+    setTimeout(() => card.classList.add('show'), 350);
+  });
+}
+
+/* ── VISIBILITY (battery saver) ── */
+document.addEventListener('visibilitychange', () => {
+  if(document.hidden){ cancelAnimationFrame(raf); }
+  else { frame(); }
+});
+</script>
+
+<!-- MUSIC — seamless carry-through -->
+<script>
+(function(){
+  if (!window.bgMusic) {
+    window.bgMusic = new Audio("assets/music/anju-song.mp3");
+    window.bgMusic.loop = true;
+    window.bgMusic.volume = 0.6;
+    window.bgMusic.preload = "auto";
+  }
+  window.bgMusic.ontimeupdate = function() {
+    try { localStorage.setItem("musicTime", window.bgMusic.currentTime); } catch(e){}
+  };
+  var _t = null;
+  try { _t = localStorage.getItem("musicTime"); } catch(e){}
+  if (_t) window.bgMusic.currentTime = parseFloat(_t);
+  window.bgMusic.play().catch(function(){});
+  function _tryPlay(){ window.bgMusic.play().catch(function(){}); }
+  document.addEventListener("touchstart", _tryPlay, {once:true, passive:true});
+  document.addEventListener("click", _tryPlay, {once:true, passive:true});
+  window.addEventListener("pagehide", function(){
+    try { localStorage.setItem("musicTime", window.bgMusic.currentTime); } catch(e){}
+  });
+  window.addEventListener("beforeunload", function(){
+    try { localStorage.setItem("musicTime", window.bgMusic.currentTime); } catch(e){}
+  });
+  document.addEventListener("visibilitychange", function(){
+    if (document.hidden) window.bgMusic.pause();
+    else window.bgMusic.play().catch(function(){});
+  });
+})();
+</script>
+</body>
+</html>
